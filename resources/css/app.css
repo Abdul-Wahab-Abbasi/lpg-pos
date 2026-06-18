@@ -67,6 +67,24 @@
 
 /* Bootstrap hardcodes these per-component at build time, so root overrides
    above don't reach them — themed individually instead. */
+
+/* Buttons — prototype's .btn is smaller/tighter/bolder than Bootstrap's
+   default; padding/font-size/weight/radius live on the base .btn class and
+   cascade into every variant/size, so one override covers all of them. */
+.btn {
+    --bs-btn-padding-x: 1.125rem;
+    --bs-btn-padding-y: .5625rem;
+    --bs-btn-font-size: .8125rem;
+    --bs-btn-font-weight: 600;
+    --bs-btn-border-radius: .5rem;
+}
+.btn-sm,
+.btn-group-sm > .btn {
+    --bs-btn-padding-x: .75rem;
+    --bs-btn-padding-y: .3125rem;
+    --bs-btn-font-size: .75rem;
+    --bs-btn-border-radius: .5rem;
+}
 .btn-primary {
     --bs-btn-bg: var(--lpg-accent);
     --bs-btn-border-color: var(--lpg-accent);
@@ -78,20 +96,225 @@
     --bs-btn-disabled-border-color: var(--lpg-accent);
     --bs-btn-focus-shadow-rgb: 249, 115, 22;
 }
+.btn-success {
+    --bs-btn-bg: var(--lpg-green);
+    --bs-btn-border-color: var(--lpg-green);
+    --bs-btn-hover-bg: #16a34a;
+    --bs-btn-hover-border-color: #16a34a;
+    --bs-btn-active-bg: #16a34a;
+    --bs-btn-active-border-color: #16a34a;
+    --bs-btn-disabled-bg: var(--lpg-green);
+    --bs-btn-disabled-border-color: var(--lpg-green);
+    --bs-btn-focus-shadow-rgb: 34, 197, 94;
+}
+.btn-danger {
+    --bs-btn-bg: var(--lpg-danger);
+    --bs-btn-border-color: var(--lpg-danger);
+    --bs-btn-hover-bg: #dc2626;
+    --bs-btn-hover-border-color: #dc2626;
+    --bs-btn-active-bg: #dc2626;
+    --bs-btn-active-border-color: #dc2626;
+    --bs-btn-disabled-bg: var(--lpg-danger);
+    --bs-btn-disabled-border-color: var(--lpg-danger);
+    --bs-btn-focus-shadow-rgb: 239, 68, 68;
+}
+/* Prototype's "ghost" button: border/text only change color on hover, no fill
+   (Bootstrap's outline buttons fill solid on hover by default). */
+.btn-outline-secondary {
+    --bs-btn-color: var(--lpg-muted);
+    --bs-btn-border-color: var(--lpg-border);
+    --bs-btn-hover-color: var(--lpg-accent);
+    --bs-btn-hover-bg: transparent;
+    --bs-btn-hover-border-color: var(--lpg-accent);
+    --bs-btn-active-color: var(--lpg-accent);
+    --bs-btn-active-bg: transparent;
+    --bs-btn-active-border-color: var(--lpg-accent);
+}
+.btn-outline-danger {
+    --bs-btn-color: var(--lpg-danger);
+    --bs-btn-border-color: rgba(239, 68, 68, .3);
+    --bs-btn-hover-color: #fff;
+    --bs-btn-hover-bg: var(--lpg-danger);
+    --bs-btn-hover-border-color: var(--lpg-danger);
+    --bs-btn-active-color: #fff;
+    --bs-btn-active-bg: var(--lpg-danger);
+    --bs-btn-active-border-color: var(--lpg-danger);
+}
+/* Square icon-only action button (table row edit/delete, etc). */
+.btn-icon {
+    width: 32px;
+    height: 32px;
+    padding: 0;
+    border-radius: 7px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+    background: var(--lpg-panel);
+    color: var(--lpg-muted);
+    border: 1px solid var(--lpg-border);
+    transition: all .15s;
+}
+.btn-icon:hover {
+    border-color: var(--lpg-accent);
+    color: var(--lpg-accent);
+}
+.btn-icon-danger {
+    border-color: rgba(239, 68, 68, .3);
+    color: var(--lpg-danger);
+}
+.btn-icon-danger:hover {
+    border-color: var(--lpg-danger);
+    color: var(--lpg-danger);
+}
+
+/* Cards */
 .card {
     --bs-card-bg: var(--lpg-card);
+    --bs-card-border-radius: .75rem;
+    --bs-card-spacer-y: 1.375rem;
+    --bs-card-spacer-x: 1.375rem;
 }
-.modal {
-    --bs-modal-bg: var(--lpg-card);
+.card-title {
+    font-size: .8125rem;
+    font-weight: 700;
+    color: var(--lpg-white);
+    margin-bottom: 1rem;
+    display: flex;
+    align-items: center;
+    gap: 7px;
 }
-.toast {
-    --bs-toast-bg: var(--lpg-card);
-    --bs-toast-header-bg: var(--lpg-card);
+.card-title i {
+    color: var(--lpg-accent);
+    font-size: .9375rem;
+}
+
+/* Tables — ported as a standalone .tbl class (no Bootstrap JS dependency to
+   preserve here, so it's simplest to match the prototype's table exactly
+   rather than re-theme Bootstrap's .table). */
+.tbl-wrap {
+    overflow-x: auto;
+}
+table.tbl {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 12.5px;
+}
+.tbl thead tr {
+    background: var(--lpg-panel);
+}
+.tbl th {
+    padding: 9px 13px;
+    color: var(--lpg-muted);
+    font-weight: 700;
+    font-size: 10px;
+    letter-spacing: .8px;
+    text-transform: uppercase;
+    border-bottom: 1px solid var(--lpg-border);
+    text-align: left;
+    white-space: nowrap;
+}
+.tbl td {
+    padding: 11px 13px;
+    border-bottom: 1px solid rgba(42, 51, 64, .7);
+    vertical-align: middle;
+}
+.tbl tr:last-child td {
+    border-bottom: none;
+}
+.tbl tbody tr:hover td {
+    background: rgba(255, 255, 255, .018);
+}
+
+/* Forms */
+.form-label {
+    font-size: 10.5px;
+    font-weight: 700;
+    color: var(--lpg-muted);
+    margin-bottom: 5px;
+    letter-spacing: .4px;
+    text-transform: uppercase;
+}
+.form-control,
+.form-select {
+    background: var(--lpg-panel);
+    border: 1px solid var(--lpg-border);
+    color: var(--lpg-text);
+    border-radius: 8px;
+    font-size: 13px;
+    padding: 9px 12px;
 }
 .form-control:focus,
 .form-select:focus {
+    background: var(--lpg-panel);
+    color: var(--lpg-text);
     border-color: var(--lpg-accent);
-    box-shadow: 0 0 0 .25rem rgba(249, 115, 22, .15);
+    box-shadow: 0 0 0 3px rgba(249, 115, 22, .11);
+}
+
+/* Badges — fully pill-shaped, smaller than Bootstrap's default. */
+.badge {
+    padding: 2px 8px;
+    border-radius: 20px;
+    font-size: 10.5px;
+    font-weight: 700;
+}
+/* Prototype badges are a translucent tint + solid-colored text, not
+   Bootstrap's default solid fill — text-bg-* sets both !important, so the
+   override needs it too. */
+.badge.text-bg-primary { background-color: rgba(249, 115, 22, .15) !important; color: var(--lpg-accent) !important; }
+.badge.text-bg-info { background-color: rgba(59, 130, 246, .15) !important; color: var(--lpg-blue) !important; }
+.badge.text-bg-success { background-color: rgba(34, 197, 94, .15) !important; color: var(--lpg-green) !important; }
+.badge.text-bg-danger { background-color: rgba(239, 68, 68, .15) !important; color: var(--lpg-danger) !important; }
+.badge.text-bg-warning { background-color: rgba(234, 179, 8, .15) !important; color: var(--lpg-warn) !important; }
+.badge.text-bg-secondary { background-color: rgba(255, 255, 255, .08) !important; color: var(--lpg-white) !important; }
+
+/* Modals — prototype has no header divider, tighter padding, plain "x" close,
+   no footer divider. Bootstrap's component vars for header/footer padding
+   are independent fixed rem values (not derived from a shared var at
+   runtime), so they're overridden directly here rather than per-variable. */
+.modal-content {
+    border-radius: .8rem;
+}
+.modal-header {
+    padding: 26px 26px 0;
+    border-bottom: none;
+}
+.modal-title {
+    font-size: 15px;
+    font-weight: 800;
+    color: var(--lpg-white);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+.modal-title i {
+    color: var(--lpg-accent);
+}
+.modal-body {
+    padding: 18px 26px;
+}
+.modal-footer {
+    padding: 0 26px 26px;
+    border-top: none;
+    gap: 9px;
+}
+.btn-close {
+    padding: 0;
+    width: 1.25rem;
+    height: 1.25rem;
+    opacity: .7;
+}
+.btn-close:hover {
+    opacity: 1;
+}
+.modal-backdrop.show {
+    opacity: .82;
+}
+
+.toast {
+    --bs-toast-bg: var(--lpg-card);
+    --bs-toast-header-bg: var(--lpg-card);
 }
 
 /* ==========================================================================
@@ -332,4 +555,56 @@
     font-size: 22px;
     opacity: .2;
     color: currentColor;
+}
+
+/* ==========================================================================
+   Inventory card
+   Ported from ui/inventory.html's .inv-card family.
+   ========================================================================== */
+.inventory-card {
+    background: var(--lpg-card);
+    border: 1px solid var(--lpg-border);
+    border-radius: 13px;
+    padding: 22px;
+    height: 100%;
+    transition: border-color .2s;
+}
+.inventory-card:hover {
+    border-color: rgba(249, 115, 22, .3);
+}
+.inventory-card-low {
+    border-color: rgba(239, 68, 68, .4);
+    background: rgba(239, 68, 68, .03);
+}
+.inventory-card-value {
+    font-size: 42px;
+    font-weight: 800;
+    font-family: 'JetBrains Mono', monospace;
+    line-height: 1;
+}
+.inventory-price-row {
+    display: flex;
+    gap: 10px;
+    margin-top: 10px;
+    flex-wrap: wrap;
+}
+.inventory-price-chip {
+    background: var(--lpg-panel);
+    border: 1px solid var(--lpg-border);
+    border-radius: 7px;
+    padding: 5px 10px;
+    font-size: 11px;
+}
+.inventory-price-chip .label {
+    color: var(--lpg-muted);
+    font-size: 9px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .5px;
+    margin-bottom: 1px;
+}
+.inventory-price-chip .value {
+    font-family: 'JetBrains Mono', monospace;
+    font-weight: 600;
+    color: var(--lpg-text);
 }

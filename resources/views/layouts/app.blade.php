@@ -91,6 +91,9 @@
                 <x-toast :variant="$variant" class="toast-autoshow">{{ session($variant) }}</x-toast>
             @endif
         @endforeach
+        @if ($errors->any())
+            <x-toast variant="danger" class="toast-autoshow">{{ $errors->first() }}</x-toast>
+        @endif
         @yield('toasts')
     </div>
 

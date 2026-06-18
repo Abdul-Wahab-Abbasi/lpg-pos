@@ -73,7 +73,7 @@
         </div>
     </div>
 
-    <x-modal id="styleGuideModal" title="Bootstrap modal">
+    <x-modal id="styleGuideModal" title="Bootstrap modal" icon="bi-info-circle-fill">
         This is Bootstrap's own Modal JS component, no hand-rolled <code>openModal()</code>.
 
         <x-slot:footer>
