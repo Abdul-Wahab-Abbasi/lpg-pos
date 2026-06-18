@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard — LPG Point</title>
+    <link rel="stylesheet" href="assets/css/style.css">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
+
+</head>
+
+<body>
+    <!-- SIDEBAR -->
+    <div class="sidebar">
+        <div class="sb-logo">
+            <div class="sb-logo-icon">🔥</div>
+            <div class="sb-logo-text">
+                <div class="n">LPG Point</div>
+                <div class="s">Gas Shop POS</div>
+            </div>
+        </div>
+        <div id="sidebar-nav"></div>
+        <div class="sb-footer">
+            <div class="sb-user">
+                <div class="sb-avatar" id="sb-avatar">A</div>
+                <div>
+                    <div class="sb-uname" id="sb-user-name">Owner</div>
+                    <div class="sb-urole" id="sb-user-role">Admin</div>
+                </div>
+                <button class="sb-logout" onclick="logout()" title="Logout"><i
+                        class="bi bi-box-arrow-right"></i></button>
+            </div>
+        </div>
+    </div>
+    <!-- MAIN -->
+    <div class="main">
+        <div class="topbar">
+            <div class="tb-left">
+                <h1>Dashboard</h1>
+                <div class="bc" id="today-date"></div>
+            </div>
+            <div class="tb-right">
+                <span class="badge-live">● Live</span>
+                <a href="sale.html" class="btn btn-primary"><i class="bi bi-cart-plus-fill"></i> New Sale</a>
+            </div>
+        </div>
+
+        <!-- STAT CARDS -->
+        <div class="sg">
+            <div class="sc o">
+                <div class="sc-lbl">Aaj ki Revenue</div>
+                <div class="sc-val o" id="s-rev">Rs 0</div>
+                <div class="sc-sub" id="s-rev-sub">0 transactions</div><i class="bi bi-currency-rupee sc-icon"></i>
+            </div>
+            <div class="sc b">
+                <div class="sc-lbl">Cylinders Out (Total)</div>
+                <div class="sc-val b" id="s-out">0</div>
+                <div class="sc-sub">Customers ke paas</div><i class="bi bi-send-fill sc-icon"></i>
+            </div>
+            <div class="sc g">
+                <div class="sc-lbl">Refills Aaj</div>
+                <div class="sc-val g" id="s-ref">0</div>
+                <div class="sc-sub">Gas bharwaye</div><i class="bi bi-droplet-fill sc-icon"></i>
+            </div>
+            <div class="sc r">
+                <div class="sc-lbl">Low Stock Alert</div>
+                <div class="sc-val r" id="s-low">0</div>
+                <div class="sc-sub">Items restock chahiye</div><i class="bi bi-exclamation-triangle-fill sc-icon"></i>
+            </div>
+        </div>
+
+        <!-- SECOND ROW -->
+        <div class="g2 mb3">
+            <div class="sc w" style="grid-column:span 1">
+                <div class="sc-lbl">Total Udhaar (Outstanding)</div>
+                <div class="sc-val r" id="s-udhaar">Rs 0</div>
+                <div class="sc-sub">Sab customers ka balance</div><i class="bi bi-credit-card-fill sc-icon"></i>
+            </div>
+            <div class="sc g" style="grid-column:span 1">
+                <div class="sc-lbl">Total Customers</div>
+                <div class="sc-val g" id="s-custs">0</div>
+                <div class="sc-sub">Registered customers</div><i class="bi bi-people-fill sc-icon"></i>
+            </div>
+        </div>
+
+        <div class="g2">
+            <!-- Recent Transactions -->
+            <div class="card">
+                <div class="card-title"><i class="bi bi-clock-history"></i> Recent Transactions</div>
+                <div class="tbl-wrap">
+                    <table class="tbl">
+                        <thead>
+                            <tr>
+                                <th>Customer</th>
+                                <th>Type</th>
+                                <th>Item</th>
+                                <th>Amount</th>
+                            </tr>
+                        </thead>
+                        <tbody id="recent-tbody"></tbody>
+                    </table>
+                </div>
+                <div class="mt2m"><a href="transactions.html" class="btn btn-ghost btn-sm w100">Sab dekhein →</a></div>
+            </div>
+            <!-- Stock Overview -->
+            <div class="card">
+                <div class="card-title"><i class="bi bi-box-seam-fill"></i> Stock Overview</div>
+                <div id="stock-overview"></div>
+                <div class="mt2m"><a href="inventory.html" class="btn btn-ghost btn-sm w100">Inventory dekhein →</a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Quick Actions -->
+        <div class="g3 mt3">
+            <a href="sale.html" class="card"
+                style="cursor:pointer;text-decoration:none;display:flex;align-items:center;gap:14px;padding:18px;">
+                <div
+                    style="width:42px;height:42px;border-radius:10px;background:rgba(249,115,22,.15);display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0;">
+                    <i class="bi bi-cart-plus-fill text-o"></i></div>
+                <div>
+                    <div class="fw7" style="color:var(--white)">New Sale</div>
+                    <div class="fs11 text-muted">Cylinder bechein</div>
+                </div>
+            </a>
+            <a href="return.html" class="card"
+                style="cursor:pointer;text-decoration:none;display:flex;align-items:center;gap:14px;padding:18px;">
+                <div
+                    style="width:42px;height:42px;border-radius:10px;background:rgba(59,130,246,.15);display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0;">
+                    <i class="bi bi-arrow-return-left text-b"></i></div>
+                <div>
+                    <div class="fw7" style="color:var(--white)">Return</div>
+                    <div class="fs11 text-muted">Cylinder wapas lein</div>
+                </div>
+            </a>
+            <a href="refill.html" class="card"
+                style="cursor:pointer;text-decoration:none;display:flex;align-items:center;gap:14px;padding:18px;">
+                <div
+                    style="width:42px;height:42px;border-radius:10px;background:rgba(34,197,94,.15);display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0;">
+                    <i class="bi bi-droplet-fill text-g"></i></div>
+                <div>
+                    <div class="fw7" style="color:var(--white)">Refill</div>
+                    <div class="fs11 text-muted">Gas bharwayein</div>
+                </div>
+            </a>
+        </div>
+    </div>
+
+    <script src="assets/js/main.js"></script>
+    <script>
+        requireAuth();
+        renderSidebar('dashboard');
+        document.getElementById('today-date').textContent = new Date().toLocaleDateString('en-PK', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+
+        function loadDashboard() {
+            const txns = DB.txns(); const custs = DB.custs(); const inv = DB.inv(); const prods = DB.prods();
+            const today = todayStr();
+            const todayTxns = txns.filter(t => t.dt && t.dt.startsWith(today));
+            const rev = todayTxns.filter(t => t.type === 'SALE').reduce((s, t) => s + t.amount, 0);
+            const refToday = todayTxns.filter(t => t.type === 'REFILL').reduce((s, t) => s + t.qty, 0);
+            const custArr = Object.values(custs);
+            const cylOut = custArr.reduce((s, c) => s + totalOut(c), 0);
+            const udhaar = custArr.reduce((s, c) => s + (c.balance || 0), 0);
+            const lowItems = Object.values(inv).filter(i => pct(i.qty, i.maxQty) < 25).length;
+
+            document.getElementById('s-rev').textContent = rs(rev);
+            document.getElementById('s-rev-sub').textContent = todayTxns.length + ' transactions aaj';
+            document.getElementById('s-out').textContent = cylOut;
+            document.getElementById('s-ref').textContent = refToday;
+            document.getElementById('s-low').textContent = lowItems;
+            document.getElementById('s-udhaar').textContent = rs(udhaar);
+            document.getElementById('s-custs').textContent = custArr.length;
+
+            // Recent
+            const recent = txns.slice(0, 6);
+            document.getElementById('recent-tbody').innerHTML = recent.length ? recent.map(t => `
+    <tr>
+      <td><div class="fw6">${t.custName}</div><div class="fs11 text-muted">${t.custPhone}</div></td>
+      <td><span class="badge ${typeBadge(t.type)}">${typeLabel(t.type)}</span></td>
+      <td class="fs12">${t.prodName}</td>
+      <td class="mono text-g">${rs(t.amount)}</td>
+    </tr>`).join('') : '<tr><td colspan="4" class="tc text-muted" style="padding:20px">Koi transaction nahi</td></tr>';
+
+            // Stock
+            document.getElementById('stock-overview').innerHTML = Object.entries(inv).map(([pid, iv]) => {
+                const p = prods[pid]; if (!p) return '';
+                const pc = pct(iv.qty, iv.maxQty); const cls = progClass(pc);
+                const custOut = custArr.reduce((s, c) => s + (c.cylindersOut[pid] || 0), 0);
+                return `<div class="mb3">
+      <div class="df ac jb mb1">
+        <span class="fw6 fs13">${p.name}</span>
+        <span class="mono fs12" style="color:${cls === 'low' ? 'var(--danger)' : cls === 'mid' ? 'var(--warn)' : 'var(--green)'}">${iv.qty}/${iv.maxQty}</span>
+      </div>
+      <div class="pw"><div class="pf ${cls}" style="width:${pc}%"></div></div>
+      <div class="fs10 text-muted mt1">Customers ke paas: <span class="text-o fw6">${custOut}</span></div>
+    </div>`;
+            }).join('');
+        }
+        loadDashboard();
+    </script>
+
+</body>
+
+</html>

@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>New Sale — LPG Point</title>
+<link rel="stylesheet" href="assets/css/style.css">
+<link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
+</head>
+<body>
+<div class="sidebar">
+  <div class="sb-logo"><div class="sb-logo-icon">🔥</div><div class="sb-logo-text"><div class="n">LPG Point</div><div class="s">Gas Shop POS</div></div></div>
+  <div id="sidebar-nav"></div>
+  <div class="sb-footer"><div class="sb-user"><div class="sb-avatar" id="sb-avatar">A</div><div><div class="sb-uname" id="sb-user-name">Owner</div><div class="sb-urole" id="sb-user-role">Admin</div></div><button class="sb-logout" onclick="logout()"><i class="bi bi-box-arrow-right"></i></button></div></div>
+</div>
+<div class="main">
+  <div class="topbar">
+    <div class="tb-left"><h1>New Sale</h1><div class="bc">Sales → <span>Cylinder Bechna</span></div></div>
+    <div class="tb-right"><a href="index.html" class="btn btn-ghost btn-sm"><i class="bi bi-arrow-left"></i> Dashboard</a></div>
+  </div>
+
+  <div style="max-width:620px;margin:0 auto;">
+    <div class="card">
+      <div class="card-title"><i class="bi bi-cart-plus-fill"></i> Sale Invoice</div>
+
+      <!-- Customer -->
+      <div class="fg">
+        <label class="fl">Customer *</label>
+        <div class="df gap2">
+          <div class="ac-wrap" style="flex:1">
+            <input class="fc" id="s-cust" placeholder="Customer ka naam likhein..." autocomplete="off">
+            <div class="ac-drop" id="s-cust-drop"></div>
+          </div>
+          <button class="btn btn-blue btn-sm" onclick="openModal('addCustModal')" title="Naya customer"><i class="bi bi-person-plus-fill"></i></button>
+        </div>
+        <input type="hidden" id="s-cust-id">
+      </div>
+      <div class="fg">
+        <label class="fl">Phone</label>
+        <input class="fc" id="s-phone" placeholder="Auto-fill hoga ya likhein">
+      </div>
+
+      <!-- Items section -->
+      <div class="divider"></div>
+      <div class="df ac jb mb2">
+        <div class="fw7 fs13 text-w">Items</div>
+        <button class="btn btn-ghost btn-sm" onclick="addItem()"><i class="bi bi-plus-lg"></i> Item Add Karo</button>
+      </div>
+      <div id="items-list"></div>
+
+      <div class="divider"></div>
+      <!-- Payment -->
+      <div class="fr c2">
+        <div class="fg mb0">
+          <label class="fl">Payment Method *</label>
+          <select class="fs" id="s-pay">
+            <option value="cash">💵 Cash</option>
+            <option value="easypaisa">📱 EasyPaisa</option>
+            <option value="jazzcash">📱 JazzCash</option>
+            <option value="credit">📒 Udhaar (Credit)</option>
+          </select>
+        </div>
+        <div class="fg mb0">
+          <label class="fl">Note (Optional)</label>
+          <input class="fc" id="s-note" placeholder="Koi remark...">
+        </div>
+      </div>
+      <div class="divider"></div>
+      <div class="total-box mb3">
+        <div class="lbl">Grand Total</div>
+        <div class="val" id="grand-total">Rs 0</div>
+      </div>
+      <button class="btn btn-primary w100" style="padding:12px;" onclick="processSale()"><i class="bi bi-bag-check-fill"></i> Sale Karo</button>
+    </div>
+  </div>
+</div>
+
+<!-- ADD CUSTOMER MODAL -->
+<div class="mo" id="addCustModal">
+  <div class="mb w420">
+    <button class="mc" onclick="closeModal('addCustModal')">✕</button>
+    <div class="mt2"><i class="bi bi-person-plus-fill"></i> Naya Customer</div>
+    <div class="fg"><label class="fl">Naam *</label><input class="fc" id="ac-name" placeholder="Customer ka naam"></div>
+    <div class="fg"><label class="fl">Phone *</label><input class="fc" id="ac-phone" placeholder="03xx-xxxxxxx"></div>
+    <div class="fg"><label class="fl">Address</label><input class="fc" id="ac-addr" placeholder="Ghar ka pata"></div>
+    <div class="fg mb0"><label class="fl">Notes</label><input class="fc" id="ac-note" placeholder="Koi khaas baat..."></div>
+    <div class="mf"><button class="btn btn-ghost" onclick="closeModal('addCustModal')">Cancel</button><button class="btn btn-primary" onclick="submitAddCust()"><i class="bi bi-check-lg"></i> Save</button></div>
+  </div>
+</div>
+
+<!-- SALE RECEIPT MODAL -->
+<div class="mo" id="saleReceiptModal">
+  <div class="mb w520">
+    <button class="mc" onclick="closeModal('saleReceiptModal')">✕</button>
+    <div class="receipt-wrap" id="sale-receipt-content"></div>
+    <div class="mf no-print">
+      <button class="btn btn-ghost" onclick="closeModal('saleReceiptModal')">Close</button>
+      <button class="btn btn-primary" onclick="printReceipt('saleReceiptModal')"><i class="bi bi-printer-fill"></i> Print</button>
+    </div>
+  </div>
+</div>
+
+<script src="assets/js/main.js"></script>
+<script>
+requireAuth(); renderSidebar('sale');
+const prods = DB.prods();
+let items = [];
+
+function addItem(){
+  const idx = items.length;
+  items.push({prodId:'', qty:1, unitPrice:0});
+  renderItems();
+}
+
+function removeItem(idx){
+  items.splice(idx,1); renderItems(); calcTotal();
+}
+
+function renderItems(){
+  if(!items.length){
+    document.getElementById('items-list').innerHTML=`<div class="tc text-muted fs12" style="padding:20px 0;">Item add karo ☝️</div>`;
+    return;
+  }
+  document.getElementById('items-list').innerHTML = items.map((it,i)=>`
+    <div class="card mb2" style="padding:14px;background:var(--panel);">
+      <div class="fr c3" style="gap:10px;align-items:flex-end;">
+        <div class="fg mb0" style="grid-column:span 1">
+          <label class="fl">Cylinder Type</label>
+          <select class="fs" onchange="onProdChange(${i},this.value)">
+            <option value="">-- Select --</option>
+            ${Object.values(prods).map(p=>`<option value="${p.id}" ${it.prodId===p.id?'selected':''}>${p.name}</option>`).join('')}
+          </select>
+        </div>
+        <div class="fg mb0">
+          <label class="fl">Qty</label>
+          <input class="fc" type="number" min="1" value="${it.qty}" oninput="onQtyChange(${i},this.value)">
+        </div>
+        <div class="fg mb0">
+          <label class="fl">Unit Price</label>
+          <input class="fc" type="number" value="${it.unitPrice}" oninput="onPriceChange(${i},this.value)">
+        </div>
+      </div>
+      <div class="df ac jb mt1">
+        <div class="fs12 text-muted">Subtotal: <span class="mono text-o fw6">Rs ${(it.qty*it.unitPrice).toLocaleString()}</span></div>
+        <button class="btn btn-ghost btn-xs" onclick="removeItem(${i})"><i class="bi bi-trash3"></i></button>
+      </div>
+    </div>`).join('');
+}
+
+function onProdChange(i, pid){
+  items[i].prodId = pid;
+  if(pid && prods[pid]) items[i].unitPrice = prods[pid].salePrice;
+  renderItems(); calcTotal();
+}
+function onQtyChange(i, v){ items[i].qty=parseInt(v)||1; calcTotal(); }
+function onPriceChange(i, v){ items[i].unitPrice=parseInt(v)||0; calcTotal(); }
+function calcTotal(){
+  const t=items.reduce((s,it)=>s+it.qty*it.unitPrice,0);
+  document.getElementById('grand-total').textContent=rs(t);
+}
+
+function onCustSelected(id){ /* auto-filled by selectCust */ }
+function onCustAdded(id, c){
+  document.getElementById('s-cust').value=c.name;
+  document.getElementById('s-phone').value=c.phone;
+  document.getElementById('s-cust-id').value=id;
+}
+
+function processSale(){
+  const custName=document.getElementById('s-cust').value.trim();
+  const custPhone=document.getElementById('s-phone').value.trim()||'';
+  const pay=document.getElementById('s-pay').value;
+  const note=document.getElementById('s-note').value.trim();
+  if(!custName){ toast('Customer ka naam zaroori hai!','w'); return; }
+  if(!items.length){ toast('Kam az kam ek item add karo!','w'); return; }
+  if(items.some(it=>!it.prodId||it.qty<1||it.unitPrice<=0)){ toast('Sab items complete karein!','w'); return; }
+
+  // Stock check
+  const inv=DB.inv();
+  for(const it of items){
+    if(inv[it.prodId] && inv[it.prodId].qty < it.qty){
+      toast(`Stock kam hai! Sirf ${inv[it.prodId].qty} available ${prods[it.prodId].name}`,'e'); return;
+    }
+  }
+
+  let custId=document.getElementById('s-cust-id').value||findOrCreateCust(custName, custPhone);
+  const custs=DB.custs(); const c=custs[custId];
+  const total=items.reduce((s,it)=>s+it.qty*it.unitPrice,0);
+  const invNo=DB.nextId('INV'); const txnId=DB.nextId('TXN');
+  const dt=new Date().toISOString();
+
+  // Save each item as one txn (or combined — here combined)
+  const txn={id:txnId,invNo,custId,custName:c.name,custPhone:c.phone,
+    type:'SALE',items:JSON.parse(JSON.stringify(items)),
+    prodId:items[0].prodId,prodName:prods[items[0].prodId]?.name||'',
+    qty:items.reduce((s,i)=>s+i.qty,0),amount:total,pay,note,dt,addedBy:getSession()?.id||'U1'};
+  DB.addTxn(txn);
+
+  // Update customer & inventory
+  items.forEach(it=>{
+    c.cylindersOut[it.prodId]=(c.cylindersOut[it.prodId]||0)+it.qty;
+    if(inv[it.prodId]) inv[it.prodId].qty-=it.qty;
+  });
+  if(pay==='credit'){ c.creditSales+=total; c.balance+=total; }
+  else c.cashSales+=total;
+  c.salesCount++; c.lastVisit=dt;
+  DB.setCusts(custs); DB.setInv(inv);
+
+  // Ledger
+  DB.addLedgerEntry({id:DB.nextId('LED'),custId,dt,desc:`Sale Invoice ${invNo}`,debit:pay==='credit'?total:0,cashAmt:pay!=='credit'?total:0,pay,txnRef:txnId,balance:c.balance});
+
+  showSaleReceipt(txn, c);
+  toast('Sale ho gayi! '+rs(total)+' 🎉','s');
+  items=[]; renderItems(); calcTotal();
+  document.getElementById('s-cust').value=''; document.getElementById('s-phone').value='';
+  document.getElementById('s-cust-id').value=''; document.getElementById('s-note').value='';
+}
+
+function showSaleReceipt(txn, c){
+  const rows = (txn.items||[{prodId:txn.prodId,qty:txn.qty,unitPrice:txn.amount/txn.qty}]).map(it=>`
+    <tr><td>${prods[it.prodId]?.name||it.prodId}</td><td class="tc">${it.qty}</td><td class="tr">Rs ${it.unitPrice.toLocaleString()}</td><td class="tr fw7">Rs ${(it.qty*it.unitPrice).toLocaleString()}</td></tr>`).join('');
+  document.getElementById('sale-receipt-content').innerHTML=`
+    <div class="rh">
+      <div><div class="shop">🔥 LPG Point<small>Gas Cylinder Shop</small></div></div>
+      <div class="inv-meta"><div class="inv-no">${txn.invNo}</div><div class="inv-type">Sale Receipt</div><div>${fmtDt(txn.dt)}</div></div>
+    </div>
+    <div class="rb">
+      <div class="r2col">
+        <div><div class="r-lbl">Customer</div><div class="r-val">${c.name}</div><div class="r-val-sm">${c.phone}</div></div>
+        <div><div class="r-lbl">Payment</div><div class="r-val">${payLabel(txn.pay)}</div><div class="r-val-sm">${fmtDate(txn.dt)}</div></div>
+      </div>
+      <table class="rtbl"><thead><tr><th>Item</th><th>Qty</th><th>Price</th><th>Total</th></tr></thead><tbody>${rows}</tbody></table>
+      <div class="r-total-row"><div class="r-total-box"><div class="tl">GRAND TOTAL</div><div class="tv">Rs ${txn.amount.toLocaleString()}</div></div></div>
+    </div>
+    <div class="rf"><span>Shukriya! Dobara tashreef lana 🙏</span><span>LPG Point</span></div>`;
+  openModal('saleReceiptModal');
+}
+
+// Init
+addItem();
+setupCustAC('s-cust','s-cust-drop','s-phone','s-cust-id');
+</script>
+</body>
+</html>

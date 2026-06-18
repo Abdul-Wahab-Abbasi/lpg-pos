@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Transactions — LPG Point</title>
+  <link rel="stylesheet" href="assets/css/style.css">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
+</head>
+
+<body>
+  <div class="sidebar">
+    <div class="sb-logo">
+      <div class="sb-logo-icon">🔥</div>
+      <div class="sb-logo-text">
+        <div class="n">LPG Point</div>
+        <div class="s">Gas Shop POS</div>
+      </div>
+    </div>
+    <div id="sidebar-nav"></div>
+    <div class="sb-footer">
+      <div class="sb-user">
+        <div class="sb-avatar" id="sb-avatar">A</div>
+        <div>
+          <div class="sb-uname" id="sb-user-name">Owner</div>
+          <div class="sb-urole" id="sb-user-role">Admin</div>
+        </div><button class="sb-logout" onclick="logout()"><i class="bi bi-box-arrow-right"></i></button>
+      </div>
+    </div>
+  </div>
+  <div class="main">
+    <div class="topbar">
+      <div class="tb-left">
+        <h1>Transactions</h1>
+        <div class="bc">Records → <span>Sab Transactions</span></div>
+      </div>
+      <div class="tb-right">
+        <input class="fc" id="f-search" placeholder="🔍 Search naam/ID..." style="width:180px;" oninput="filterTxns()">
+        <select class="fs" id="f-type" style="width:130px;" onchange="filterTxns()">
+          <option value="">Sab Types</option>
+          <option value="SALE">Sale</option>
+          <option value="RETURN">Return</option>
+          <option value="REFILL">Refill</option>
+        </select>
+        <select class="fs" id="f-pay" style="width:130px;" onchange="filterTxns()">
+          <option value="">Sab Payment</option>
+          <option value="cash">Cash</option>
+          <option value="credit">Udhaar</option>
+          <option value="easypaisa">EasyPaisa</option>
+          <option value="jazzcash">JazzCash</option>
+        </select>
+        <input class="fc" id="f-date" type="date" style="width:150px;" onchange="filterTxns()">
+      </div>
+    </div>
+    <!-- Summary -->
+    <div class="g4 mb3" id="txn-summary"></div>
+    <div class="card">
+      <div class="card-title df ac jb"><span><i class="bi bi-receipt"></i> Transactions</span><span
+          class="fs12 text-muted" id="txn-count">0 records</span></div>
+      <div class="tbl-wrap">
+        <table class="tbl">
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Invoice</th>
+              <th>Date/Time</th>
+              <th>Customer</th>
+              <th>Type</th>
+              <th>Item</th>
+              <th>Qty</th>
+              <th>Amount</th>
+              <th>Payment</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody id="txn-body"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- Receipt view modal -->
+  <div class="mo" id="viewReceiptModal">
+    <div class="mb w520">
+      <button class="mc" onclick="closeModal('viewReceiptModal')">✕</button>
+      <div class="receipt-wrap" id="view-receipt-content"></div>
+      <div class="mf no-print">
+        <button class="btn btn-ghost" onclick="closeModal('viewReceiptModal')">Close</button>
+        <button class="btn btn-primary" onclick="printReceipt('viewReceiptModal')"><i class="bi bi-printer-fill"></i>
+          Print</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="assets/js/main.js"></script>
+  <script>
+    requireAuth(); renderSidebar('transactions');
+    const prods = DB.prods();
+    let allTxns = [];
+
+    function loadTxns() {
+      allTxns = DB.txns();
+      // Summary
+      const total = allTxns.reduce((s, t) => s + (t.type !== 'RETURN' ? t.amount : 0), 0);
+      const sales = allTxns.filter(t => t.type === 'SALE').length;
+      const returns = allTxns.filter(t => t.type === 'RETURN').length;
+      const refills = allTxns.filter(t => t.type === 'REFILL').length;
+      document.getElementById('txn-summary').innerHTML = `
+    <div class="sc o"><div class="sc-lbl">Total Revenue</div><div class="sc-val o fs-mono" style="font-size:18px;">${rs(total)}</div><div class="sc-sub">${allTxns.length} txns</div></div>
+    <div class="sc b"><div class="sc-lbl">Sales</div><div class="sc-val b">${sales}</div></div>
+    <div class="sc b"><div class="sc-lbl">Returns</div><div class="sc-val b">${returns}</div></div>
+    <div class="sc g"><div class="sc-lbl">Refills</div><div class="sc-val g">${refills}</div></div>`;
+      filterTxns();
+    }
+
+    function filterTxns() {
+      const q = document.getElementById('f-search').value.toLowerCase();
+      const ft = document.getElementById('f-type').value;
+      const fp = document.getElementById('f-pay').value;
+      const fd = document.getElementById('f-date').value;
+      const list = allTxns.filter(t => {
+        const mq = !q || (t.custName || '').toLowerCase().includes(q) || (t.id || '').toLowerCase().includes(q) || (t.invNo || '').toLowerCase().includes(q) || (t.custPhone || '').includes(q);
+        const mt = !ft || t.type === ft;
+        const mp = !fp || t.pay === fp;
+        const md = !fd || t.dt.startsWith(fd);
+        return mq && mt && mp && md;
+      });
+      document.getElementById('txn-count').textContent = list.length + ' records';
+      document.getElementById('txn-body').innerHTML = list.length ? list.map(t => `
+    <tr>
+      <td class="mono text-muted fs11">${t.id}</td>
+      <td class="mono fs12 text-o">${t.invNo || '—'}</td>
+      <td class="fs12 text-muted">${fmtDt(t.dt)}</td>
+      <td><div class="fw6">${t.custName}</div><div class="fs11 text-muted">${t.custPhone}</div></td>
+      <td><span class="badge ${typeBadge(t.type)}">${typeLabel(t.type)}</span></td>
+      <td class="fs12">${t.prodName || '—'}</td>
+      <td class="tc fw6">${t.qty}</td>
+      <td class="mono text-g fw6">${t.amount ? rs(t.amount) : '—'}</td>
+      <td><span class="badge ${payBadge(t.pay)}">${payLabel(t.pay)}</span></td>
+      <td><button class="btn-icon" onclick="viewReceipt('${t.id}')"><i class="bi bi-eye"></i></button></td>
+    </tr>`).join('') : '<tr><td colspan="10" class="tc text-muted" style="padding:28px">Koi transaction nahi mila</td></tr>';
+    }
+
+    function viewReceipt(txnId) {
+      const t = allTxns.find(x => x.id === txnId); if (!t) return;
+      const condMap = { ok: '✅ Good', damaged: '⚠️ Damaged', leaking: '🔴 Leaking' };
+      const typeTitle = t.type === 'SALE' ? 'SALE RECEIPT' : t.type === 'RETURN' ? 'RETURN RECEIPT' : 'REFILL RECEIPT';
+      let bodyRows = '';
+      if (t.type === 'RETURN') {
+        bodyRows = `<table class="rtbl"><thead><tr><th>Item</th><th>Qty</th><th>Condition</th></tr></thead><tbody><tr><td>${t.prodName}</td><td class="tc fw7">${t.qty}</td><td>${condMap[t.condition] || '—'}</td></tr></tbody></table>`;
+      } else {
+        const its = t.items || [{ prodId: t.prodId, qty: t.qty, unitPrice: t.unitPrice }];
+        bodyRows = `<table class="rtbl"><thead><tr><th>Item</th><th>Qty</th><th>Price</th><th>Total</th></tr></thead><tbody>${its.map(i => `<tr><td>${prods[i.prodId]?.name || i.prodId}</td><td class="tc">${i.qty}</td><td>Rs ${(i.unitPrice || 0).toLocaleString()}</td><td class="fw7">Rs ${((i.qty || 0) * (i.unitPrice || 0)).toLocaleString()}</td></tr>`).join('')}</tbody></table>`;
+      }
+      document.getElementById('view-receipt-content').innerHTML = `
+    <div class="rh"><div><div class="shop">🔥 LPG Point<small>Gas Cylinder Shop</small></div></div><div class="inv-meta"><div class="inv-no">${t.invNo || t.id}</div><div class="inv-type">${typeTitle}</div><div>${fmtDt(t.dt)}</div></div></div>
+    <div class="rb">
+      <div class="r2col"><div><div class="r-lbl">Customer</div><div class="r-val">${t.custName}</div><div class="r-val-sm">${t.custPhone}</div></div><div><div class="r-lbl">Payment</div><div class="r-val">${payLabel(t.pay)}</div></div></div>
+      ${bodyRows}
+      ${t.amount ? `<div class="r-total-row"><div class="r-total-box"><div class="tl">TOTAL</div><div class="tv">Rs ${t.amount.toLocaleString()}</div></div></div>` : ''}
+      ${t.note ? `<div class="mt2m fs12 text-muted">Note: ${t.note}</div>` : ''}
+    </div>
+    <div class="rf"><span>Shukriya! — LPG Point</span><span>${fmtDate(t.dt)}</span></div>`;
+      openModal('viewReceiptModal');
+    }
+    loadTxns();
+  </script>
+</body>
+
+</html>

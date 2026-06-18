@@ -1,0 +1,342 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Reports — LPG Point</title>
+<link rel="stylesheet" href="assets/css/style.css">
+<link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
+<style>
+.tab-bar{display:flex;gap:4px;background:var(--card);border:1px solid var(--border);border-radius:10px;padding:5px;margin-bottom:24px;}
+.tab-btn{flex:1;padding:9px 16px;border:none;background:none;color:var(--muted);font-size:13px;font-weight:600;border-radius:8px;cursor:pointer;transition:all .15s;font-family:'Inter',sans-serif;}
+.tab-btn.active{background:var(--accent);color:#fff;}
+.tab-btn:hover:not(.active){background:var(--panel);color:var(--tm);}
+.tab-content{display:none;}.tab-content.active{display:block;}
+.pay-breakdown{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-top:16px;}
+.pb-item{background:var(--panel);border:1px solid var(--border);border-radius:8px;padding:12px;text-align:center;}
+.pb-item .lbl{font-size:10px;color:var(--muted);margin-bottom:5px;}
+.pb-item .val{font-size:16px;font-weight:800;font-family:'JetBrains Mono',monospace;}
+@media print{
+  .sidebar,.topbar,.tab-bar,.no-print{display:none!important;}
+  .main{margin:0!important;padding:20px!important;}
+  body{background:#fff!important;color:#000!important;}
+  .card{border:1px solid #ddd!important;background:#fff!important;}
+  .sc{background:#f9f9f9!important;border:1px solid #ddd!important;}
+  .sc-lbl,.sc-sub{color:#666!important;}
+  .sc-val,.text-o,.text-g,.text-b,.text-r,.text-w,.mono{color:#111!important;}
+  .tbl th{background:#f5f5f5!important;color:#555!important;}
+  .tbl td{border-bottom:1px solid #eee!important;color:#111!important;}
+  .badge{border:1px solid #ccc!important;color:#333!important;background:#f5f5f5!important;}
+  .pb-item{background:#f9f9f9!important;border:1px solid #ddd!important;}
+  .pb-item .lbl{color:#666!important;} .pb-item .val{color:#111!important;}
+  .print-header{display:block!important;}
+}
+.print-header{display:none;text-align:center;padding:20px 0 10px;border-bottom:2px solid #000;margin-bottom:20px;}
+.print-header h2{font-size:20px;font-weight:800;color:#000;}
+.print-header p{font-size:12px;color:#555;}
+</style>
+</head>
+<body>
+<div class="sidebar">
+  <div class="sb-logo"><div class="sb-logo-icon">🔥</div><div class="sb-logo-text"><div class="n">LPG Point</div><div class="s">Gas Shop POS</div></div></div>
+  <div id="sidebar-nav"></div>
+  <div class="sb-footer"><div class="sb-user"><div class="sb-avatar" id="sb-avatar">A</div><div><div class="sb-uname" id="sb-user-name">Owner</div><div class="sb-urole" id="sb-user-role">Admin</div></div><button class="sb-logout" onclick="logout()"><i class="bi bi-box-arrow-right"></i></button></div></div>
+</div>
+<div class="main">
+  <div class="topbar">
+    <div class="tb-left"><h1>Reports</h1><div class="bc">Reports → <span>Business Summary</span></div></div>
+    <div class="tb-right no-print">
+      <button class="btn btn-ghost" onclick="window.print()"><i class="bi bi-printer"></i> Print / PDF</button>
+    </div>
+  </div>
+
+  <!-- Print Header (only visible on print) -->
+  <div class="print-header">
+    <h2>🔥 LPG Point — Gas Cylinder Shop</h2>
+    <p id="print-report-title">Report</p>
+    <p id="print-date"></p>
+  </div>
+
+  <!-- TABS -->
+  <div class="tab-bar no-print">
+    <button class="tab-btn active" onclick="showTab('daily')"><i class="bi bi-calendar-day"></i> Daily</button>
+    <button class="tab-btn" onclick="showTab('monthly')"><i class="bi bi-calendar-month"></i> Monthly</button>
+    <button class="tab-btn" onclick="showTab('inventory')"><i class="bi bi-box-seam-fill"></i> Inventory</button>
+  </div>
+
+  <!-- ===== DAILY TAB ===== -->
+  <div class="tab-content active" id="tab-daily">
+    <div class="df ac gap3 mb3 no-print fw">
+      <div>
+        <label class="fl mb1">Date Select Karein</label>
+        <input class="fc" type="date" id="daily-date" style="width:180px;" onchange="loadDailyReport()">
+      </div>
+    </div>
+    <div class="g4 mb3" id="daily-stats"></div>
+    <div class="card mb3">
+      <div class="card-title"><i class="bi bi-bar-chart-fill"></i> Payment Breakdown</div>
+      <div class="pay-breakdown" id="daily-pay-breakdown"></div>
+    </div>
+    <div class="card">
+      <div class="card-title df ac jb">
+        <span><i class="bi bi-receipt"></i> Us Din ki Transactions</span>
+        <span class="fs12 text-muted" id="daily-txn-count"></span>
+      </div>
+      <div class="tbl-wrap">
+        <table class="tbl">
+          <thead><tr><th>Invoice</th><th>Time</th><th>Customer</th><th>Type</th><th>Item</th><th>Qty</th><th>Amount</th><th>Payment</th></tr></thead>
+          <tbody id="daily-txn-body"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== MONTHLY TAB ===== -->
+  <div class="tab-content" id="tab-monthly">
+    <div class="df ac gap3 mb3 no-print fw">
+      <div>
+        <label class="fl mb1">Month Select</label>
+        <input class="fc" type="month" id="monthly-month" style="width:180px;" onchange="loadMonthlyReport()">
+      </div>
+    </div>
+    <div class="g4 mb3" id="monthly-stats"></div>
+    <div class="card mb3">
+      <div class="card-title"><i class="bi bi-bar-chart-fill"></i> Payment Breakdown</div>
+      <div class="pay-breakdown" id="monthly-pay-breakdown"></div>
+    </div>
+    <div class="g2 mb3">
+      <div class="card">
+        <div class="card-title"><i class="bi bi-calendar3"></i> Daily Breakdown</div>
+        <div class="tbl-wrap">
+          <table class="tbl">
+            <thead><tr><th>Date</th><th>Txns</th><th>Sales</th><th>Refills</th><th>Revenue</th></tr></thead>
+            <tbody id="daily-breakdown-body"></tbody>
+          </table>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-title"><i class="bi bi-trophy-fill"></i> Top 5 Customers</div>
+        <div class="tbl-wrap">
+          <table class="tbl">
+            <thead><tr><th>#</th><th>Customer</th><th>Txns</th><th>Amount</th></tr></thead>
+            <tbody id="top-custs-body"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== INVENTORY TAB ===== -->
+  <div class="tab-content" id="tab-inventory">
+    <div class="g4 mb3" id="inv-report-stats"></div>
+    <div class="card mb3">
+      <div class="card-title"><i class="bi bi-box-seam-fill"></i> Stock Status</div>
+      <div class="tbl-wrap">
+        <table class="tbl">
+          <thead><tr><th>Product</th><th>In Stock</th><th>Min Level</th><th>Max Cap</th><th>Cust ke paas</th><th>Sale Price</th><th>Refill Charge</th><th>Status</th></tr></thead>
+          <tbody id="inv-report-body"></tbody>
+        </table>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title"><i class="bi bi-people-fill"></i> Customer Cylinder Details</div>
+      <div class="tbl-wrap">
+        <table class="tbl">
+          <thead><tr><th>Customer</th><th>Phone</th><th>11 KG</th><th>5 KG</th><th>45 KG</th><th>HOB</th><th>Total Out</th><th>Balance</th></tr></thead>
+          <tbody id="cust-cyl-body"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="assets/js/main.js"></script>
+<script>
+requireAuth(); renderSidebar('reports');
+const prods = DB.prods();
+
+// ---- TAB SWITCH ----
+function showTab(tab){
+  document.querySelectorAll('.tab-content').forEach(t=>t.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+  document.getElementById('tab-'+tab).classList.add('active');
+  event.target.classList.add('active');
+  if(tab==='daily') loadDailyReport();
+  else if(tab==='monthly') loadMonthlyReport();
+  else loadInventoryReport();
+}
+
+// ---- DAILY ----
+function loadDailyReport(){
+  const dateEl = document.getElementById('daily-date');
+  const selDate = dateEl.value || todayStr();
+  if(!dateEl.value) dateEl.value = selDate;
+  document.getElementById('print-report-title').textContent = 'Daily Report — '+selDate;
+  document.getElementById('print-date').textContent = 'Generated: '+fmtDt(new Date().toISOString());
+
+  const txns = DB.txns().filter(t=>t.dt&&t.dt.startsWith(selDate));
+  const saleTxns = txns.filter(t=>t.type==='SALE');
+  const refillTxns = txns.filter(t=>t.type==='REFILL');
+  const returnTxns = txns.filter(t=>t.type==='RETURN');
+  const revenue = txns.filter(t=>t.type!=='RETURN').reduce((s,t)=>s+t.amount,0);
+  const cylSold = saleTxns.reduce((s,t)=>s+t.qty,0);
+
+  document.getElementById('daily-stats').innerHTML = `
+    <div class="sc o"><div class="sc-lbl">Total Revenue</div><div class="sc-val o" style="font-size:20px;">${rs(revenue)}</div><div class="sc-sub">${txns.length} transactions</div></div>
+    <div class="sc b"><div class="sc-lbl">Sales</div><div class="sc-val b">${saleTxns.length}</div><div class="sc-sub">${cylSold} cylinders</div></div>
+    <div class="sc g"><div class="sc-lbl">Refills</div><div class="sc-val g">${refillTxns.length}</div></div>
+    <div class="sc w"><div class="sc-lbl">Returns</div><div class="sc-val w">${returnTxns.length}</div></div>`;
+
+  // Payment breakdown
+  const cash = txns.filter(t=>t.pay==='cash').reduce((s,t)=>s+t.amount,0);
+  const credit = txns.filter(t=>t.pay==='credit').reduce((s,t)=>s+t.amount,0);
+  const ep = txns.filter(t=>t.pay==='easypaisa').reduce((s,t)=>s+t.amount,0);
+  const jc = txns.filter(t=>t.pay==='jazzcash').reduce((s,t)=>s+t.amount,0);
+  document.getElementById('daily-pay-breakdown').innerHTML = `
+    <div class="pb-item"><div class="lbl">💵 Cash</div><div class="val text-g">${rs(cash)}</div></div>
+    <div class="pb-item"><div class="lbl">📱 EasyPaisa</div><div class="val text-b">${rs(ep)}</div></div>
+    <div class="pb-item"><div class="lbl">📱 JazzCash</div><div class="val text-o">${rs(jc)}</div></div>
+    <div class="pb-item"><div class="lbl">📒 Udhaar</div><div class="val text-r">${rs(credit)}</div></div>`;
+
+  document.getElementById('daily-txn-count').textContent = txns.length+' transactions';
+  document.getElementById('daily-txn-body').innerHTML = txns.length ? txns.map(t=>`
+    <tr>
+      <td class="mono fs11 text-o">${t.invNo||t.id}</td>
+      <td class="fs12 text-muted">${new Date(t.dt).toLocaleTimeString('en-PK',{hour:'2-digit',minute:'2-digit'})}</td>
+      <td><div class="fw6">${t.custName}</div><div class="fs11 text-muted">${t.custPhone}</div></td>
+      <td><span class="badge ${typeBadge(t.type)}">${typeLabel(t.type)}</span></td>
+      <td class="fs12">${t.prodName||'—'}</td>
+      <td class="tc fw6">${t.qty}</td>
+      <td class="mono text-g fw6">${t.amount?rs(t.amount):'—'}</td>
+      <td><span class="badge ${payBadge(t.pay)}">${payLabel(t.pay)}</span></td>
+    </tr>`).join('') : '<tr><td colspan="8" class="tc text-muted" style="padding:24px">Is din koi transaction nahi</td></tr>';
+}
+
+// ---- MONTHLY ----
+function loadMonthlyReport(){
+  const monthEl = document.getElementById('monthly-month');
+  const now = new Date();
+  const selMonth = monthEl.value || `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}`;
+  if(!monthEl.value) monthEl.value = selMonth;
+  document.getElementById('print-report-title').textContent = 'Monthly Report — '+selMonth;
+
+  const txns = DB.txns().filter(t=>t.dt&&t.dt.startsWith(selMonth));
+  const saleTxns = txns.filter(t=>t.type==='SALE');
+  const revenue = txns.filter(t=>t.type!=='RETURN').reduce((s,t)=>s+t.amount,0);
+  const cylSold = saleTxns.reduce((s,t)=>s+t.qty,0);
+
+  // Best selling
+  const itemCounts = {};
+  saleTxns.forEach(t=>{ itemCounts[t.prodName]=(itemCounts[t.prodName]||0)+t.qty; });
+  const bestItem = Object.entries(itemCounts).sort((a,b)=>b[1]-a[1])[0];
+
+  // New customers this month
+  const custs = DB.custs();
+  const newCusts = 0; // simplified
+
+  document.getElementById('monthly-stats').innerHTML = `
+    <div class="sc o"><div class="sc-lbl">Total Revenue</div><div class="sc-val o" style="font-size:20px;">${rs(revenue)}</div><div class="sc-sub">${txns.length} transactions</div></div>
+    <div class="sc b"><div class="sc-lbl">Total Sales</div><div class="sc-val b">${saleTxns.length}</div><div class="sc-sub">${cylSold} cylinders</div></div>
+    <div class="sc g"><div class="sc-lbl">Best Item</div><div class="sc-val g" style="font-size:14px;line-height:1.3">${bestItem?bestItem[0].split(' ').slice(0,2).join(' '):'—'}</div><div class="sc-sub">${bestItem?bestItem[1]+' sold':''}</div></div>
+    <div class="sc w"><div class="sc-lbl">Refills</div><div class="sc-val w">${txns.filter(t=>t.type==='REFILL').length}</div></div>`;
+
+  // Payment breakdown
+  const cash=txns.filter(t=>t.pay==='cash').reduce((s,t)=>s+t.amount,0);
+  const credit=txns.filter(t=>t.pay==='credit').reduce((s,t)=>s+t.amount,0);
+  const ep=txns.filter(t=>t.pay==='easypaisa').reduce((s,t)=>s+t.amount,0);
+  const jc=txns.filter(t=>t.pay==='jazzcash').reduce((s,t)=>s+t.amount,0);
+  document.getElementById('monthly-pay-breakdown').innerHTML=`
+    <div class="pb-item"><div class="lbl">💵 Cash</div><div class="val text-g">${rs(cash)}</div></div>
+    <div class="pb-item"><div class="lbl">📱 EasyPaisa</div><div class="val text-b">${rs(ep)}</div></div>
+    <div class="pb-item"><div class="lbl">📱 JazzCash</div><div class="val text-o">${rs(jc)}</div></div>
+    <div class="pb-item"><div class="lbl">📒 Udhaar</div><div class="val text-r">${rs(credit)}</div></div>`;
+
+  // Daily breakdown for the month
+  const dayMap = {};
+  txns.forEach(t=>{
+    const d = t.dt.split('T')[0];
+    if(!dayMap[d]) dayMap[d]={date:d,txns:0,sales:0,refills:0,rev:0};
+    dayMap[d].txns++;
+    if(t.type==='SALE'){dayMap[d].sales++;dayMap[d].rev+=t.amount;}
+    else if(t.type==='REFILL'){dayMap[d].refills++;dayMap[d].rev+=t.amount;}
+  });
+  const dayRows = Object.values(dayMap).sort((a,b)=>a.date>b.date?1:-1);
+  document.getElementById('daily-breakdown-body').innerHTML = dayRows.length ? dayRows.map(d=>`
+    <tr>
+      <td class="fw6">${fmtDate(d.date)}</td>
+      <td class="tc">${d.txns}</td>
+      <td class="tc text-o fw6">${d.sales}</td>
+      <td class="tc text-g">${d.refills}</td>
+      <td class="mono text-g fw6">${rs(d.rev)}</td>
+    </tr>`).join('') : '<tr><td colspan="5" class="tc text-muted" style="padding:20px">Is mahine koi data nahi</td></tr>';
+
+  // Top customers
+  const custTotals = {};
+  txns.filter(t=>t.type!=='RETURN').forEach(t=>{
+    if(!custTotals[t.custId]) custTotals[t.custId]={name:t.custName,phone:t.custPhone,amt:0,count:0};
+    custTotals[t.custId].amt+=t.amount; custTotals[t.custId].count++;
+  });
+  const top5 = Object.values(custTotals).sort((a,b)=>b.amt-a.amt).slice(0,5);
+  document.getElementById('top-custs-body').innerHTML = top5.length ? top5.map((c,i)=>`
+    <tr>
+      <td class="tc fw7 text-o">${i+1}</td>
+      <td><div class="fw6">${c.name}</div><div class="fs11 text-muted">${c.phone}</div></td>
+      <td class="tc">${c.count}</td>
+      <td class="mono text-g fw6">${rs(c.amt)}</td>
+    </tr>`).join('') : '<tr><td colspan="4" class="tc text-muted" style="padding:16px">Koi data nahi</td></tr>';
+}
+
+// ---- INVENTORY REPORT ----
+function loadInventoryReport(){
+  document.getElementById('print-report-title').textContent = 'Inventory Report';
+  document.getElementById('print-date').textContent = 'Generated: '+fmtDt(new Date().toISOString());
+  const inv = DB.inv(); const custs = DB.custs(); const custArr = Object.values(custs);
+  const totalStock = Object.values(inv).reduce((s,i)=>s+i.qty,0);
+  const totalCustOut = custArr.reduce((s,c)=>s+Object.values(c.cylindersOut||{}).reduce((a,v)=>a+v,0),0);
+  const lowItems = Object.values(inv).filter(i=>pct(i.qty,i.maxQty)<25).length;
+  const totalVal = Object.entries(inv).reduce((s,[pid,iv])=>{
+    return s+(iv.qty*(prods[pid]?.salePrice||0));
+  },0);
+
+  document.getElementById('inv-report-stats').innerHTML=`
+    <div class="sc g"><div class="sc-lbl">Total In Stock</div><div class="sc-val g">${totalStock}</div><div class="sc-sub">Godam mein</div></div>
+    <div class="sc o"><div class="sc-lbl">Cust ke paas</div><div class="sc-val o">${totalCustOut}</div></div>
+    <div class="sc r"><div class="sc-lbl">Low Stock</div><div class="sc-val r">${lowItems}</div></div>
+    <div class="sc w"><div class="sc-lbl">Stock Value</div><div class="sc-val w" style="font-size:18px;">${rs(totalVal)}</div></div>`;
+
+  document.getElementById('inv-report-body').innerHTML = Object.entries(inv).map(([pid,iv])=>{
+    const p=prods[pid]; if(!p) return '';
+    const pc=pct(iv.qty,iv.maxQty); const isLow=pc<25;
+    const custOut=custArr.reduce((s,c)=>s+(c.cylindersOut?.[pid]||0),0);
+    return `<tr>
+      <td class="fw6">${p.name}</td>
+      <td class="mono fw7 ${isLow?'text-r':'text-g'}">${iv.qty}</td>
+      <td class="tc text-muted">${iv.minQty}</td>
+      <td class="tc text-muted">${iv.maxQty}</td>
+      <td class="tc mono text-o fw6">${custOut}</td>
+      <td class="mono text-o">${rs(p.salePrice)}</td>
+      <td class="mono text-b">${rs(p.refillCharge)}</td>
+      <td><span class="badge ${isLow?'bg-low':'bg-ok'}">${isLow?'⚠️ Low':'✅ OK'}</span></td>
+    </tr>`;
+  }).join('');
+
+  // Customer cylinder details
+  const prodIds = Object.keys(prods);
+  const custWithOut = custArr.filter(c=>Object.values(c.cylindersOut||{}).some(v=>v>0)||c.balance>0);
+  document.getElementById('cust-cyl-body').innerHTML = custWithOut.length ? custWithOut.map(c=>`
+    <tr>
+      <td class="fw6">${c.name}</td>
+      <td class="fs12 text-muted">${c.phone}</td>
+      <td class="tc mono ${(c.cylindersOut?.P001||0)>0?'text-o fw7':'text-muted'}">${c.cylindersOut?.P001||0}</td>
+      <td class="tc mono ${(c.cylindersOut?.P002||0)>0?'text-o fw7':'text-muted'}">${c.cylindersOut?.P002||0}</td>
+      <td class="tc mono ${(c.cylindersOut?.P003||0)>0?'text-o fw7':'text-muted'}">${c.cylindersOut?.P003||0}</td>
+      <td class="tc mono ${(c.cylindersOut?.P004||0)>0?'text-o fw7':'text-muted'}">${c.cylindersOut?.P004||0}</td>
+      <td class="tc mono fw7 ${totalOut(c)>0?'text-o':'text-muted'}">${totalOut(c)}</td>
+      <td class="mono fw7 ${(c.balance||0)>0?'text-r':'text-g'}">${rs(c.balance||0)}</td>
+    </tr>`).join('') : '<tr><td colspan="8" class="tc text-muted" style="padding:20px">Sab cylinders return ho chuke hain ✅</td></tr>';
+}
+
+// Init
+loadDailyReport();
+</script>
+</body>
+</html>

@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Products — LPG Point</title>
+<link rel="stylesheet" href="assets/css/style.css">
+<link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
+</head>
+<body>
+<div class="sidebar">
+  <div class="sb-logo"><div class="sb-logo-icon">🔥</div><div class="sb-logo-text"><div class="n">LPG Point</div><div class="s">Gas Shop POS</div></div></div>
+  <div id="sidebar-nav"></div>
+  <div class="sb-footer"><div class="sb-user"><div class="sb-avatar" id="sb-avatar">A</div><div><div class="sb-uname" id="sb-user-name">Owner</div><div class="sb-urole" id="sb-user-role">Admin</div></div><button class="sb-logout" onclick="logout()"><i class="bi bi-box-arrow-right"></i></button></div></div>
+</div>
+<div class="main">
+  <div class="topbar">
+    <div class="tb-left"><h1>Products</h1><div class="bc">Stock → <span>Cylinder Types</span></div></div>
+    <div class="tb-right">
+      <button class="btn btn-primary" onclick="openAddProd()"><i class="bi bi-plus-lg"></i> Add Product</button>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title"><i class="bi bi-tag-fill"></i> Sab Products</div>
+    <div class="tbl-wrap">
+      <table class="tbl">
+        <thead>
+          <tr><th>ID</th><th>Product Name</th><th>Category</th><th>Sale Price</th><th>Refill Charge</th><th>Return Deposit</th><th>Unit</th><th>Actions</th></tr>
+        </thead>
+        <tbody id="prod-body"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- ADD/EDIT PRODUCT MODAL -->
+<div class="mo" id="prodModal">
+  <div class="mb w520">
+    <button class="mc" onclick="closeModal('prodModal')">✕</button>
+    <div class="mt2" id="prod-modal-title"><i class="bi bi-tag-fill"></i> Naya Product Add Karein</div>
+    <input type="hidden" id="pm-id">
+    <div class="fr c2">
+      <div class="fg"><label class="fl">Product Name *</label><input class="fc" id="pm-name" placeholder="e.g. 11 KG LPG Cylinder"></div>
+      <div class="fg"><label class="fl">Category</label><input class="fc" id="pm-cat" placeholder="e.g. Cylinder"></div>
+    </div>
+    <div class="fr c3">
+      <div class="fg"><label class="fl">Sale Price (Rs) *</label><input class="fc" type="number" id="pm-sale" placeholder="0"></div>
+      <div class="fg"><label class="fl">Refill Charge (Rs)</label><input class="fc" type="number" id="pm-refill" placeholder="0"></div>
+      <div class="fg"><label class="fl">Return Deposit</label><input class="fc" type="number" id="pm-deposit" placeholder="0"></div>
+    </div>
+    <div class="fg mb0"><label class="fl">Unit</label>
+      <select class="fs" id="pm-unit">
+        <option value="pcs">pcs (pieces)</option>
+        <option value="kg">kg</option>
+        <option value="ltr">ltr</option>
+      </select>
+    </div>
+    <div class="mf">
+      <button class="btn btn-ghost" onclick="closeModal('prodModal')">Cancel</button>
+      <button class="btn btn-primary" onclick="saveProd()"><i class="bi bi-check-lg"></i> Save Product</button>
+    </div>
+  </div>
+</div>
+
+<!-- DELETE CONFIRM -->
+<div class="mo" id="delProdModal">
+  <div class="mb w420">
+    <button class="mc" onclick="closeModal('delProdModal')">✕</button>
+    <div class="mt2"><i class="bi bi-trash3-fill" style="color:var(--danger)"></i> Product Delete?</div>
+    <p class="fs13 text-muted mb3">Kya aap sure hain? <span id="del-prod-name" class="text-w fw6"></span> delete ho jayega.</p>
+    <div class="mf">
+      <button class="btn btn-ghost" onclick="closeModal('delProdModal')">Cancel</button>
+      <button class="btn btn-danger" onclick="confirmDelete()"><i class="bi bi-trash3-fill"></i> Delete Karo</button>
+    </div>
+  </div>
+</div>
+
+<script src="assets/js/main.js"></script>
+<script>
+requireAuth(); renderSidebar('products');
+let deletingId = '';
+
+function loadProds(){
+  const prods = DB.prods();
+  const inv = DB.inv();
+  const tbody = document.getElementById('prod-body');
+  const list = Object.values(prods);
+  if(!list.length){
+    tbody.innerHTML = '<tr><td colspan="8" class="tc text-muted" style="padding:28px">Koi product nahi</td></tr>';
+    return;
+  }
+  tbody.innerHTML = list.map(p => {
+    const stock = inv[p.id]?.qty ?? '—';
+    return `<tr>
+      <td class="mono fs11 text-muted">${p.id}</td>
+      <td><div class="fw6">${p.name}</div></td>
+      <td><span class="badge bg-sale">${p.cat||'Cylinder'}</span></td>
+      <td class="mono text-o fw6">${rs(p.salePrice)}</td>
+      <td class="mono text-b">${rs(p.refillCharge)}</td>
+      <td class="mono text-muted">${rs(p.returnDeposit)}</td>
+      <td class="text-muted">${p.unit}</td>
+      <td>
+        <div class="df gap1">
+          <button class="btn-icon" onclick="editProd('${p.id}')" title="Edit"><i class="bi bi-pencil-fill"></i></button>
+          <button class="btn-icon" onclick="askDelete('${p.id}')" title="Delete" style="border-color:rgba(239,68,68,.3);color:var(--danger)"><i class="bi bi-trash3"></i></button>
+        </div>
+      </td>
+    </tr>`;
+  }).join('');
+}
+
+function openAddProd(){
+  document.getElementById('prod-modal-title').innerHTML = '<i class="bi bi-tag-fill"></i> Naya Product Add Karein';
+  document.getElementById('pm-id').value = '';
+  ['pm-name','pm-cat','pm-sale','pm-refill','pm-deposit'].forEach(id => document.getElementById(id).value = '');
+  document.getElementById('pm-unit').value = 'pcs';
+  openModal('prodModal');
+}
+
+function editProd(id){
+  const p = DB.prods()[id]; if(!p) return;
+  document.getElementById('prod-modal-title').innerHTML = '<i class="bi bi-pencil-fill"></i> Product Edit Karein';
+  document.getElementById('pm-id').value = id;
+  document.getElementById('pm-name').value = p.name;
+  document.getElementById('pm-cat').value = p.cat||'';
+  document.getElementById('pm-sale').value = p.salePrice;
+  document.getElementById('pm-refill').value = p.refillCharge;
+  document.getElementById('pm-deposit').value = p.returnDeposit;
+  document.getElementById('pm-unit').value = p.unit||'pcs';
+  openModal('prodModal');
+}
+
+function saveProd(){
+  const id = document.getElementById('pm-id').value;
+  const name = document.getElementById('pm-name').value.trim();
+  const cat = document.getElementById('pm-cat').value.trim() || 'Cylinder';
+  const salePrice = parseInt(document.getElementById('pm-sale').value)||0;
+  const refillCharge = parseInt(document.getElementById('pm-refill').value)||0;
+  const returnDeposit = parseInt(document.getElementById('pm-deposit').value)||0;
+  const unit = document.getElementById('pm-unit').value;
+  if(!name){ toast('Product name zaroori hai!','w'); return; }
+  if(!salePrice){ toast('Sale price daalen!','w'); return; }
+  const prods = DB.prods();
+  const inv = DB.inv();
+  if(id){
+    prods[id] = {...prods[id], name, cat, salePrice, refillCharge, returnDeposit, unit};
+    toast(name+' update ho gaya ✅','s');
+  } else {
+    const newId = 'P'+String(Object.keys(prods).length+1).padStart(3,'0');
+    prods[newId] = {id:newId, name, cat, salePrice, refillCharge, returnDeposit, unit};
+    inv[newId] = {prodId:newId, qty:0, minQty:2, maxQty:50};
+    DB.setInv(inv);
+    toast(name+' add ho gaya! ✅','s');
+  }
+  DB.setProds(prods);
+  closeModal('prodModal');
+  loadProds();
+}
+
+function askDelete(id){
+  deletingId = id;
+  const p = DB.prods()[id];
+  document.getElementById('del-prod-name').textContent = p?.name||id;
+  openModal('delProdModal');
+}
+
+function confirmDelete(){
+  const prods = DB.prods();
+  const name = prods[deletingId]?.name||deletingId;
+  delete prods[deletingId];
+  DB.setProds(prods);
+  closeModal('delProdModal');
+  toast(name+' delete ho gaya','s');
+  loadProds();
+}
+
+loadProds();
+</script>
+</body>
+</html>

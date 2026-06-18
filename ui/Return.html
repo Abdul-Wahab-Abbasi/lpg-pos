@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Return — LPG Point</title>
+<link rel="stylesheet" href="assets/css/style.css">
+<link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
+</head>
+<body>
+<div class="sidebar">
+  <div class="sb-logo"><div class="sb-logo-icon">🔥</div><div class="sb-logo-text"><div class="n">LPG Point</div><div class="s">Gas Shop POS</div></div></div>
+  <div id="sidebar-nav"></div>
+  <div class="sb-footer"><div class="sb-user"><div class="sb-avatar" id="sb-avatar">A</div><div><div class="sb-uname" id="sb-user-name">Owner</div><div class="sb-urole" id="sb-user-role">Admin</div></div><button class="sb-logout" onclick="logout()"><i class="bi bi-box-arrow-right"></i></button></div></div>
+</div>
+<div class="main">
+  <div class="topbar">
+    <div class="tb-left"><h1>Return</h1><div class="bc">Sales → <span>Cylinder Wapas Lena</span></div></div>
+    <div class="tb-right"><a href="index.html" class="btn btn-ghost btn-sm"><i class="bi bi-arrow-left"></i> Dashboard</a></div>
+  </div>
+  <div style="max-width:560px;margin:0 auto;">
+    <div class="card mb3" style="background:rgba(59,130,246,.05);border-color:rgba(59,130,246,.2);">
+      <div class="df ac gap2 fs12 text-b"><i class="bi bi-info-circle-fill" style="font-size:16px"></i> <strong>Return kya hota hai?</strong> Customer apna khali cylinder wapas deta hai — koi charge nahi. Stock mein wapas aata hai.</div>
+    </div>
+    <div class="card">
+      <div class="card-title"><i class="bi bi-arrow-return-left text-b"></i> Return Entry</div>
+      <div class="fg">
+        <label class="fl">Customer *</label>
+        <div class="df gap2">
+          <div class="ac-wrap" style="flex:1"><input class="fc" id="r-cust" placeholder="Customer ka naam likhein..." autocomplete="off"><div class="ac-drop" id="r-cust-drop"></div></div>
+          <button class="btn btn-blue btn-sm" onclick="openModal('addCustModal')"><i class="bi bi-person-plus-fill"></i></button>
+        </div>
+        <input type="hidden" id="r-cust-id">
+      </div>
+      <div class="fg"><label class="fl">Phone</label><input class="fc" id="r-phone" placeholder="Auto-fill hoga"></div>
+
+      <!-- Cylinders out info -->
+      <div id="cust-out-info" style="display:none" class="mb3">
+        <div class="fl mb1">Is Customer ke paas Cylinders</div>
+        <div id="cust-out-chips" class="df fw gap1"></div>
+      </div>
+
+      <div class="fr c2">
+        <div class="fg"><label class="fl">Cylinder Type *</label>
+          <select class="fs" id="r-prod" onchange="onReturnProdChange()">
+            <option value="">-- Select --</option>
+          </select>
+        </div>
+        <div class="fg"><label class="fl">Qty *</label><input class="fc" type="number" id="r-qty" value="1" min="1" oninput="validateReturnQty()"></div>
+      </div>
+      <div class="fg"><label class="fl">Condition *</label>
+        <select class="fs" id="r-cond">
+          <option value="ok">✅ Good Condition</option>
+          <option value="damaged">⚠️ Damaged</option>
+          <option value="leaking">🔴 Leaking / Fault</option>
+        </select>
+      </div>
+      <div class="fg"><label class="fl">Note</label><input class="fc" id="r-note" placeholder="Koi remark..."></div>
+      <div id="r-err" style="display:none;" class="mb2" style="background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.3);border-radius:8px;padding:9px 12px;font-size:12px;color:var(--danger);"></div>
+      <button class="btn btn-blue w100" style="padding:12px;" onclick="processReturn()"><i class="bi bi-arrow-return-left"></i> Wapas Lijiye</button>
+    </div>
+  </div>
+</div>
+
+<!-- ADD CUSTOMER MODAL -->
+<div class="mo" id="addCustModal">
+  <div class="mb w420">
+    <button class="mc" onclick="closeModal('addCustModal')">✕</button>
+    <div class="mt2"><i class="bi bi-person-plus-fill"></i> Naya Customer</div>
+    <div class="fg"><label class="fl">Naam *</label><input class="fc" id="ac-name" placeholder="Customer ka naam"></div>
+    <div class="fg"><label class="fl">Phone *</label><input class="fc" id="ac-phone" placeholder="03xx-xxxxxxx"></div>
+    <div class="fg"><label class="fl">Address</label><input class="fc" id="ac-addr" placeholder="Ghar ka pata"></div>
+    <div class="fg mb0"><label class="fl">Notes</label><input class="fc" id="ac-note" placeholder="Koi khaas baat..."></div>
+    <div class="mf"><button class="btn btn-ghost" onclick="closeModal('addCustModal')">Cancel</button><button class="btn btn-primary" onclick="submitAddCust()"><i class="bi bi-check-lg"></i> Save</button></div>
+  </div>
+</div>
+
+<!-- RETURN RECEIPT -->
+<div class="mo" id="returnReceiptModal">
+  <div class="mb w520">
+    <button class="mc" onclick="closeModal('returnReceiptModal')">✕</button>
+    <div class="receipt-wrap" id="return-receipt-content"></div>
+    <div class="mf no-print">
+      <button class="btn btn-ghost" onclick="closeModal('returnReceiptModal')">Close</button>
+      <button class="btn btn-primary" onclick="printReceipt('returnReceiptModal')"><i class="bi bi-printer-fill"></i> Print</button>
+    </div>
+  </div>
+</div>
+
+<script src="assets/js/main.js"></script>
+<script>
+requireAuth(); renderSidebar('return');
+const prods=DB.prods();
+let selCustId='';
+
+function onCustSelected(id){
+  selCustId=id;
+  const custs=DB.custs(); const c=custs[id]; if(!c) return;
+  const out=c.cylindersOut||{};
+  const hasOut=Object.values(out).some(v=>v>0);
+  const infoEl=document.getElementById('cust-out-info');
+  const chipsEl=document.getElementById('cust-out-chips');
+  infoEl.style.display='block';
+  if(!hasOut){
+    chipsEl.innerHTML='<span class="fs12 text-muted">Is customer ke paas koi cylinder out nahi</span>';
+  } else {
+    chipsEl.innerHTML=Object.entries(out).filter(([,v])=>v>0).map(([pid,qty])=>`<span class="chip chip-o">${prods[pid]?.name||pid}: ${qty}</span>`).join('');
+  }
+  // Populate product dropdown - only out ones
+  const sel=document.getElementById('r-prod');
+  sel.innerHTML='<option value="">-- Select --</option>'+
+    Object.entries(out).filter(([,v])=>v>0).map(([pid,qty])=>`<option value="${pid}">${prods[pid]?.name||pid} (${qty} out)</option>`).join('');
+}
+
+function onReturnProdChange(){
+  document.getElementById('r-qty').value=1;
+  document.getElementById('r-err').style.display='none';
+}
+
+function validateReturnQty(){
+  if(!selCustId) return;
+  const pid=document.getElementById('r-prod').value;
+  const qty=parseInt(document.getElementById('r-qty').value)||0;
+  if(!pid) return;
+  const custs=DB.custs(); const c=custs[selCustId];
+  const maxOut=c.cylindersOut[pid]||0;
+  const errEl=document.getElementById('r-err');
+  if(qty>maxOut){
+    errEl.style.display='block';
+    errEl.innerHTML=`⚠️ Is customer ke paas sirf <strong>${maxOut}</strong> ${prods[pid]?.name||pid} hai!`;
+    document.getElementById('r-qty').value=maxOut;
+  } else {
+    errEl.style.display='none';
+  }
+}
+
+function processReturn(){
+  const custName=document.getElementById('r-cust').value.trim();
+  const custPhone=document.getElementById('r-phone').value.trim();
+  const pid=document.getElementById('r-prod').value;
+  const qty=parseInt(document.getElementById('r-qty').value)||0;
+  const cond=document.getElementById('r-cond').value;
+  const note=document.getElementById('r-note').value.trim();
+  if(!custName){ toast('Customer select karein!','w'); return; }
+  if(!selCustId){ toast('Pehle customer select karein!','w'); return; }
+  if(!pid){ toast('Cylinder type select karo!','w'); return; }
+  if(qty<1){ toast('Qty 1 se kam nahi ho sakti!','w'); return; }
+  const custs=DB.custs(); const c=custs[selCustId];
+  const maxOut=c.cylindersOut[pid]||0;
+  if(qty>maxOut){ toast(`Is customer ke paas sirf ${maxOut} cylinder hai!`,'e'); return; }
+
+  const inv=DB.inv();
+  const invNo=DB.nextId('INV'); const txnId=DB.nextId('TXN');
+  const dt=new Date().toISOString();
+  const txn={id:txnId,invNo,custId:selCustId,custName:c.name,custPhone:c.phone,
+    type:'RETURN',prodId:pid,prodName:prods[pid]?.name||pid,qty,unitPrice:0,amount:0,
+    pay:'none',condition:cond,note,dt,addedBy:getSession()?.id||'U1'};
+  DB.addTxn(txn);
+  c.cylindersOut[pid]=Math.max(0,(c.cylindersOut[pid]||0)-qty);
+  c.salesCount++; c.lastVisit=dt;
+  if(inv[pid]) inv[pid].qty+=qty;
+  DB.setCusts(custs); DB.setInv(inv);
+
+  showReturnReceipt(txn,c);
+  toast(c.name+' ne '+qty+' cylinder wapas diya! ✅','s');
+  selCustId='';
+  document.getElementById('r-cust').value=''; document.getElementById('r-phone').value='';
+  document.getElementById('r-cust-id').value=''; document.getElementById('r-prod').innerHTML='<option value="">-- Select --</option>';
+  document.getElementById('r-qty').value=1; document.getElementById('r-note').value='';
+  document.getElementById('cust-out-info').style.display='none';
+}
+
+function showReturnReceipt(txn,c){
+  const condMap={ok:'✅ Good Condition',damaged:'⚠️ Damaged',leaking:'🔴 Leaking'};
+  document.getElementById('return-receipt-content').innerHTML=`
+    <div class="rh">
+      <div><div class="shop">🔥 LPG Point<small>Gas Cylinder Shop</small></div></div>
+      <div class="inv-meta"><div class="inv-no">${txn.invNo}</div><div class="inv-type">Return Receipt</div><div>${fmtDt(txn.dt)}</div></div>
+    </div>
+    <div class="rb">
+      <div class="r2col">
+        <div><div class="r-lbl">Customer</div><div class="r-val">${c.name}</div><div class="r-val-sm">${c.phone}</div></div>
+        <div><div class="r-lbl">Date</div><div class="r-val">${fmtDate(txn.dt)}</div></div>
+      </div>
+      <div class="r-divider"></div>
+      <table class="rtbl"><thead><tr><th>Item</th><th>Qty</th><th>Condition</th></tr></thead>
+      <tbody><tr><td>${txn.prodName}</td><td class="tc fw7">${txn.qty}</td><td>${condMap[txn.condition]||txn.condition}</td></tr></tbody></table>
+      <div style="background:#e8f5e9;border:1px solid #a5d6a7;border-radius:8px;padding:12px 16px;font-size:13px;font-weight:600;color:#2e7d32;text-align:center;">
+        ✅ Cylinder wapas le liya gaya — Shukriya!
+      </div>
+      ${txn.note?`<div class="mt2m fs12 text-muted">Note: ${txn.note}</div>`:''}
+    </div>
+    <div class="rf"><span>LPG Point — Gas Cylinder Shop</span><span>${fmtDate(txn.dt)}</span></div>`;
+  openModal('returnReceiptModal');
+}
+
+function onCustAdded(id,c){ document.getElementById('r-cust').value=c.name; document.getElementById('r-phone').value=c.phone; document.getElementById('r-cust-id').value=id; selCustId=id; }
+setupCustAC('r-cust','r-cust-drop','r-phone','r-cust-id');
+</script>
+</body>
+</html>

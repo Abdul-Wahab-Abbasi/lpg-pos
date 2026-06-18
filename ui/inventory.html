@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Inventory — LPG Point</title>
+<link rel="stylesheet" href="assets/css/style.css">
+<link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
+<style>
+.inv-card{background:var(--card);border:1px solid var(--border);border-radius:13px;padding:22px;transition:border-color .2s;}
+.inv-card:hover{border-color:rgba(249,115,22,.3);}
+.inv-card.low-stock{border-color:rgba(239,68,68,.4);background:rgba(239,68,68,.03);}
+.inv-big-num{font-size:42px;font-weight:800;font-family:'JetBrains Mono',monospace;line-height:1;}
+.inv-price-row{display:flex;gap:10px;margin-top:10px;flex-wrap:wrap;}
+.inv-price-chip{background:var(--panel);border:1px solid var(--border);border-radius:7px;padding:5px 10px;font-size:11px;}
+.inv-price-chip .lbl{color:var(--muted);font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;margin-bottom:1px;}
+.inv-price-chip .val{font-family:'JetBrains Mono',monospace;font-weight:600;color:var(--tm);}
+</style>
+</head>
+<body>
+<div class="sidebar">
+  <div class="sb-logo"><div class="sb-logo-icon">🔥</div><div class="sb-logo-text"><div class="n">LPG Point</div><div class="s">Gas Shop POS</div></div></div>
+  <div id="sidebar-nav"></div>
+  <div class="sb-footer"><div class="sb-user"><div class="sb-avatar" id="sb-avatar">A</div><div><div class="sb-uname" id="sb-user-name">Owner</div><div class="sb-urole" id="sb-user-role">Admin</div></div><button class="sb-logout" onclick="logout()"><i class="bi bi-box-arrow-right"></i></button></div></div>
+</div>
+<div class="main">
+  <div class="topbar">
+    <div class="tb-left"><h1>Inventory</h1><div class="bc">Stock → <span>Cylinder Stock</span></div></div>
+    <div class="tb-right">
+      <span id="low-alert" class="badge bg-low" style="display:none;padding:6px 12px;font-size:12px;"><i class="bi bi-exclamation-triangle-fill me-1"></i> Low Stock Items</span>
+    </div>
+  </div>
+
+  <!-- Summary -->
+  <div class="g4 mb4" id="inv-summary"></div>
+
+  <!-- Inventory Cards -->
+  <div class="g3" id="inv-grid"></div>
+</div>
+
+<!-- RESTOCK MODAL -->
+<div class="mo" id="restockModal">
+  <div class="mb w420">
+    <button class="mc" onclick="closeModal('restockModal')">✕</button>
+    <div class="mt2"><i class="bi bi-plus-circle-fill"></i> Restock Karein</div>
+    <div class="mb3" style="background:var(--panel);border-radius:8px;padding:14px;">
+      <div class="fs12 text-muted mb1">Product</div>
+      <div class="fw7 fs14" id="rs-prod-name" style="color:var(--white);font-size:14px;"></div>
+      <div class="df gap3 mt2">
+        <div><div class="fs10 text-muted">Current Stock</div><div class="mono text-o fw7" id="rs-current">0</div></div>
+        <div><div class="fs10 text-muted">Min Level</div><div class="mono fw6" id="rs-min">0</div></div>
+        <div><div class="fs10 text-muted">Max Capacity</div><div class="mono fw6" id="rs-max">0</div></div>
+      </div>
+    </div>
+    <div class="fg"><label class="fl">Kitne Cylinder Aaye? *</label><input class="fc" type="number" id="rs-qty" placeholder="0" min="1"></div>
+    <div class="fg mb0"><label class="fl">Note (Optional)</label><input class="fc" id="rs-note" placeholder="Supplier ka naam ya koi baat..."></div>
+    <div class="mf">
+      <button class="btn btn-ghost" onclick="closeModal('restockModal')">Cancel</button>
+      <button class="btn btn-green" onclick="doRestock()"><i class="bi bi-plus-circle-fill"></i> Restock Karo</button>
+    </div>
+    <input type="hidden" id="rs-prod-id">
+  </div>
+</div>
+
+<!-- EDIT PRICE MODAL -->
+<div class="mo" id="editPriceModal">
+  <div class="mb w420">
+    <button class="mc" onclick="closeModal('editPriceModal')">✕</button>
+    <div class="mt2"><i class="bi bi-pencil-fill"></i> Price Update Karein</div>
+    <div class="fw6 mb3" id="ep-prod-name" style="color:var(--white)"></div>
+    <div class="fg"><label class="fl">Sale Price (Rs)</label><input class="fc" type="number" id="ep-sale" placeholder="0"></div>
+    <div class="fg"><label class="fl">Refill Charge (Rs)</label><input class="fc" type="number" id="ep-refill" placeholder="0"></div>
+    <div class="fg mb0"><label class="fl">Return Deposit (Rs)</label><input class="fc" type="number" id="ep-deposit" placeholder="0"></div>
+    <div class="mf">
+      <button class="btn btn-ghost" onclick="closeModal('editPriceModal')">Cancel</button>
+      <button class="btn btn-primary" onclick="doEditPrice()"><i class="bi bi-check-lg"></i> Update Karein</button>
+    </div>
+    <input type="hidden" id="ep-prod-id">
+  </div>
+</div>
+
+<!-- SET MIN/MAX MODAL -->
+<div class="mo" id="setLevelsModal">
+  <div class="mb w420">
+    <button class="mc" onclick="closeModal('setLevelsModal')">✕</button>
+    <div class="mt2"><i class="bi bi-sliders"></i> Stock Levels Set Karein</div>
+    <div class="fw6 mb3" id="sl-prod-name" style="color:var(--white)"></div>
+    <div class="fg"><label class="fl">Minimum Qty (Alert Level)</label><input class="fc" type="number" id="sl-min" placeholder="0" min="0"></div>
+    <div class="fg mb0"><label class="fl">Maximum Capacity</label><input class="fc" type="number" id="sl-max" placeholder="0" min="1"></div>
+    <div class="mf">
+      <button class="btn btn-ghost" onclick="closeModal('setLevelsModal')">Cancel</button>
+      <button class="btn btn-primary" onclick="doSetLevels()"><i class="bi bi-check-lg"></i> Save</button>
+    </div>
+    <input type="hidden" id="sl-prod-id">
+  </div>
+</div>
+
+<script src="assets/js/main.js"></script>
+<script>
+requireAuth(); renderSidebar('inventory');
+
+function loadInventory(){
+  const inv = DB.inv();
+  const prods = DB.prods();
+  const custs = DB.custs();
+  const custArr = Object.values(custs);
+
+  const totalItems = Object.keys(inv).length;
+  const totalStock = Object.values(inv).reduce((s,i)=>s+i.qty,0);
+  const lowItems = Object.values(inv).filter(i=>pct(i.qty,i.maxQty)<25).length;
+  const totalCustOut = custArr.reduce((s,c)=>s+Object.values(c.cylindersOut||{}).reduce((a,v)=>a+v,0),0);
+
+  // Summary
+  document.getElementById('inv-summary').innerHTML = `
+    <div class="sc w"><div class="sc-lbl">Total Products</div><div class="sc-val w">${totalItems}</div><i class="bi bi-tag-fill sc-icon"></i></div>
+    <div class="sc g"><div class="sc-lbl">Total In Stock</div><div class="sc-val g">${totalStock}</div><div class="sc-sub">Godam mein</div><i class="bi bi-box-seam-fill sc-icon"></i></div>
+    <div class="sc o"><div class="sc-lbl">Customers ke paas</div><div class="sc-val o">${totalCustOut}</div><div class="sc-sub">Out cylinders</div><i class="bi bi-send-fill sc-icon"></i></div>
+    <div class="sc r"><div class="sc-lbl">Low Stock</div><div class="sc-val r">${lowItems}</div><div class="sc-sub">Restock chahiye</div><i class="bi bi-exclamation-triangle-fill sc-icon"></i></div>`;
+
+  if(lowItems>0){
+    document.getElementById('low-alert').style.display='inline-flex';
+    document.getElementById('low-alert').innerHTML=`<i class="bi bi-exclamation-triangle-fill"></i>&nbsp;${lowItems} Low Stock Item${lowItems>1?'s':''}`;
+  }
+
+  // Cards
+  const grid = document.getElementById('inv-grid');
+  const entries = Object.entries(inv);
+  if(!entries.length){ grid.innerHTML='<div class="tc text-muted" style="padding:40px;grid-column:span 3">Koi product nahi. Pehle Products page pe add karein.</div>'; return; }
+
+  grid.innerHTML = entries.map(([pid,iv])=>{
+    const p = prods[pid]; if(!p) return '';
+    const pc = pct(iv.qty, iv.maxQty);
+    const cls = progClass(pc);
+    const isLow = pc < 25;
+    const custOut = custArr.reduce((s,c)=>s+(c.cylindersOut?.[pid]||0),0);
+    const stockColor = isLow ? 'var(--danger)' : pc<50 ? 'var(--warn)' : 'var(--green)';
+    return `<div class="inv-card ${isLow?'low-stock':''}">
+      <div class="df ac jb mb2">
+        <div>
+          <div class="fw7 fs13" style="color:var(--white)">${p.name}</div>
+          <div class="fs11 text-muted mt1">${p.cat||'Cylinder'} • ${p.unit}</div>
+        </div>
+        ${isLow?'<span class="badge bg-low"><i class="bi bi-exclamation-triangle-fill"></i> Low</span>':''}
+      </div>
+
+      <div class="inv-big-num" style="color:${stockColor}">${iv.qty}</div>
+      <div class="fs11 text-muted mt1">Max: ${iv.maxQty} | Min Alert: ${iv.minQty}</div>
+
+      <div class="pw mt2"><div class="pf ${cls}" style="width:${pc}%"></div></div>
+      <div class="df ac jb mt1 fs11 text-muted">
+        <span>${pc}% stocked</span>
+        <span>Customers ke paas: <span class="text-o fw6">${custOut}</span></span>
+      </div>
+
+      <div class="inv-price-row">
+        <div class="inv-price-chip"><div class="lbl">Sale</div><div class="val">Rs ${p.salePrice?.toLocaleString()}</div></div>
+        <div class="inv-price-chip"><div class="lbl">Refill</div><div class="val">Rs ${p.refillCharge?.toLocaleString()}</div></div>
+        <div class="inv-price-chip"><div class="lbl">Deposit</div><div class="val">Rs ${p.returnDeposit?.toLocaleString()}</div></div>
+      </div>
+
+      <div class="divider"></div>
+      <div class="df gap2 fw">
+        <button class="btn btn-green btn-sm" onclick="openRestock('${pid}')"><i class="bi bi-plus-circle-fill"></i> Restock</button>
+        <button class="btn btn-ghost btn-sm" onclick="openEditPrice('${pid}')"><i class="bi bi-pencil"></i> Price</button>
+        <button class="btn btn-ghost btn-sm" onclick="openSetLevels('${pid}')"><i class="bi bi-sliders"></i> Levels</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// RESTOCK
+function openRestock(pid){
+  const inv=DB.inv(); const prods=DB.prods();
+  const iv=inv[pid]; const p=prods[pid];
+  document.getElementById('rs-prod-id').value=pid;
+  document.getElementById('rs-prod-name').textContent=p?.name||pid;
+  document.getElementById('rs-current').textContent=iv?.qty||0;
+  document.getElementById('rs-min').textContent=iv?.minQty||0;
+  document.getElementById('rs-max').textContent=iv?.maxQty||0;
+  document.getElementById('rs-qty').value='';
+  document.getElementById('rs-note').value='';
+  openModal('restockModal');
+}
+function doRestock(){
+  const pid=document.getElementById('rs-prod-id').value;
+  const qty=parseInt(document.getElementById('rs-qty').value)||0;
+  if(qty<1){ toast('Qty 1 se kam nahi ho sakti!','w'); return; }
+  const inv=DB.inv();
+  if(!inv[pid]){ toast('Product nahi mila!','e'); return; }
+  inv[pid].qty+=qty;
+  DB.setInv(inv);
+  closeModal('restockModal');
+  toast(qty+' cylinders stock mein add ho gaye ✅','s');
+  loadInventory();
+}
+
+// EDIT PRICE
+function openEditPrice(pid){
+  const p=DB.prods()[pid]; if(!p) return;
+  document.getElementById('ep-prod-id').value=pid;
+  document.getElementById('ep-prod-name').textContent=p.name;
+  document.getElementById('ep-sale').value=p.salePrice;
+  document.getElementById('ep-refill').value=p.refillCharge;
+  document.getElementById('ep-deposit').value=p.returnDeposit;
+  openModal('editPriceModal');
+}
+function doEditPrice(){
+  const pid=document.getElementById('ep-prod-id').value;
+  const sale=parseInt(document.getElementById('ep-sale').value)||0;
+  const refill=parseInt(document.getElementById('ep-refill').value)||0;
+  const deposit=parseInt(document.getElementById('ep-deposit').value)||0;
+  if(!sale){ toast('Sale price zaroori hai!','w'); return; }
+  const prods=DB.prods();
+  prods[pid].salePrice=sale; prods[pid].refillCharge=refill; prods[pid].returnDeposit=deposit;
+  DB.setProds(prods);
+  closeModal('editPriceModal');
+  toast('Prices update ho gayi ✅','s');
+  loadInventory();
+}
+
+// SET LEVELS
+function openSetLevels(pid){
+  const inv=DB.inv(); const p=DB.prods()[pid];
+  document.getElementById('sl-prod-id').value=pid;
+  document.getElementById('sl-prod-name').textContent=p?.name||pid;
+  document.getElementById('sl-min').value=inv[pid]?.minQty||0;
+  document.getElementById('sl-max').value=inv[pid]?.maxQty||0;
+  openModal('setLevelsModal');
+}
+function doSetLevels(){
+  const pid=document.getElementById('sl-prod-id').value;
+  const min=parseInt(document.getElementById('sl-min').value)||0;
+  const max=parseInt(document.getElementById('sl-max').value)||0;
+  if(max<1){ toast('Max qty 1 se kam nahi ho sakti!','w'); return; }
+  const inv=DB.inv();
+  inv[pid].minQty=min; inv[pid].maxQty=max;
+  DB.setInv(inv);
+  closeModal('setLevelsModal');
+  toast('Stock levels update ho gaye ✅','s');
+  loadInventory();
+}
+
+loadInventory();
+</script>
+</body>
+</html>

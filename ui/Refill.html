@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Refill — LPG Point</title>
+<link rel="stylesheet" href="assets/css/style.css">
+<link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
+</head>
+<body>
+<div class="sidebar">
+  <div class="sb-logo"><div class="sb-logo-icon">🔥</div><div class="sb-logo-text"><div class="n">LPG Point</div><div class="s">Gas Shop POS</div></div></div>
+  <div id="sidebar-nav"></div>
+  <div class="sb-footer"><div class="sb-user"><div class="sb-avatar" id="sb-avatar">A</div><div><div class="sb-uname" id="sb-user-name">Owner</div><div class="sb-urole" id="sb-user-role">Admin</div></div><button class="sb-logout" onclick="logout()"><i class="bi bi-box-arrow-right"></i></button></div></div>
+</div>
+<div class="main">
+  <div class="topbar">
+    <div class="tb-left"><h1>Refill</h1><div class="bc">Sales → <span>Gas Bharwana</span></div></div>
+    <div class="tb-right"><a href="index.html" class="btn btn-ghost btn-sm"><i class="bi bi-arrow-left"></i> Dashboard</a></div>
+  </div>
+  <div style="max-width:560px;margin:0 auto;">
+    <div class="card mb3" style="background:rgba(34,197,94,.05);border-color:rgba(34,197,94,.2);">
+      <div class="df ac gap2 fs12 text-g"><i class="bi bi-info-circle-fill" style="font-size:16px"></i> <strong>Refill kya hai?</strong> Customer khali cylinder lata hai, gas bharta hai, wapas le jata hai. Refill charge liya jata hai. Inventory count same rehta hai.</div>
+    </div>
+    <div class="card">
+      <div class="card-title"><i class="bi bi-droplet-fill text-g"></i> Refill Entry</div>
+      <div class="fg">
+        <label class="fl">Customer *</label>
+        <div class="df gap2">
+          <div class="ac-wrap" style="flex:1"><input class="fc" id="rf-cust" placeholder="Customer ka naam likhein..." autocomplete="off"><div class="ac-drop" id="rf-cust-drop"></div></div>
+          <button class="btn btn-blue btn-sm" onclick="openModal('addCustModal')"><i class="bi bi-person-plus-fill"></i></button>
+        </div>
+        <input type="hidden" id="rf-cust-id">
+      </div>
+      <div class="fg"><label class="fl">Phone</label><input class="fc" id="rf-phone" placeholder="Auto-fill hoga"></div>
+      <div class="fr c2">
+        <div class="fg"><label class="fl">Cylinder Type *</label>
+          <select class="fs" id="rf-prod" onchange="onRefillProdChange()">
+            <option value="">-- Select --</option>
+            ${Object.values(DB.prods()).map(p=>`<option value="${p.id}">${p.name}</option>`).join('')}
+          </select>
+        </div>
+        <div class="fg"><label class="fl">Qty *</label><input class="fc" type="number" id="rf-qty" value="1" min="1" oninput="calcRefillTotal()"></div>
+      </div>
+      <div class="fr c2">
+        <div class="fg"><label class="fl">Refill Charge (Rs) *</label><input class="fc" type="number" id="rf-charge" placeholder="0" oninput="calcRefillTotal()"></div>
+        <div class="fg"><label class="fl">Payment Method *</label>
+          <select class="fs" id="rf-pay">
+            <option value="cash">💵 Cash</option>
+            <option value="easypaisa">📱 EasyPaisa</option>
+            <option value="jazzcash">📱 JazzCash</option>
+            <option value="credit">📒 Udhaar</option>
+          </select>
+        </div>
+      </div>
+      <div class="fg"><label class="fl">Note</label><input class="fc" id="rf-note" placeholder="Koi remark..."></div>
+      <div class="total-box mb3">
+        <div class="lbl">Total Charge</div>
+        <div class="val" id="rf-total">Rs 0</div>
+      </div>
+      <button class="btn btn-green w100" style="padding:12px;" onclick="processRefill()"><i class="bi bi-droplet-fill"></i> Refill Karo</button>
+    </div>
+  </div>
+</div>
+
+<div class="mo" id="addCustModal">
+  <div class="mb w420">
+    <button class="mc" onclick="closeModal('addCustModal')">✕</button>
+    <div class="mt2"><i class="bi bi-person-plus-fill"></i> Naya Customer</div>
+    <div class="fg"><label class="fl">Naam *</label><input class="fc" id="ac-name" placeholder="Customer ka naam"></div>
+    <div class="fg"><label class="fl">Phone *</label><input class="fc" id="ac-phone" placeholder="03xx-xxxxxxx"></div>
+    <div class="fg"><label class="fl">Address</label><input class="fc" id="ac-addr" placeholder="Ghar ka pata"></div>
+    <div class="fg mb0"><label class="fl">Notes</label><input class="fc" id="ac-note" placeholder="Koi khaas baat..."></div>
+    <div class="mf"><button class="btn btn-ghost" onclick="closeModal('addCustModal')">Cancel</button><button class="btn btn-primary" onclick="submitAddCust()"><i class="bi bi-check-lg"></i> Save</button></div>
+  </div>
+</div>
+
+<div class="mo" id="refillReceiptModal">
+  <div class="mb w520">
+    <button class="mc" onclick="closeModal('refillReceiptModal')">✕</button>
+    <div class="receipt-wrap" id="refill-receipt-content"></div>
+    <div class="mf no-print">
+      <button class="btn btn-ghost" onclick="closeModal('refillReceiptModal')">Close</button>
+      <button class="btn btn-primary" onclick="printReceipt('refillReceiptModal')"><i class="bi bi-printer-fill"></i> Print</button>
+    </div>
+  </div>
+</div>
+
+<script src="assets/js/main.js"></script>
+<script>
+requireAuth(); renderSidebar('refill');
+const prods=DB.prods();
+function onCustSelected(){}
+function onCustAdded(id,c){ document.getElementById('rf-cust').value=c.name; document.getElementById('rf-phone').value=c.phone; document.getElementById('rf-cust-id').value=id; }
+function onRefillProdChange(){
+  const pid=document.getElementById('rf-prod').value;
+  if(pid && prods[pid]) document.getElementById('rf-charge').value=prods[pid].refillCharge;
+  calcRefillTotal();
+}
+function calcRefillTotal(){
+  const qty=parseInt(document.getElementById('rf-qty').value)||0;
+  const charge=parseInt(document.getElementById('rf-charge').value)||0;
+  document.getElementById('rf-total').textContent=rs(qty*charge);
+}
+function processRefill(){
+  const custName=document.getElementById('rf-cust').value.trim();
+  const custPhone=document.getElementById('rf-phone').value.trim();
+  const pid=document.getElementById('rf-prod').value;
+  const qty=parseInt(document.getElementById('rf-qty').value)||0;
+  const charge=parseInt(document.getElementById('rf-charge').value)||0;
+  const pay=document.getElementById('rf-pay').value;
+  const note=document.getElementById('rf-note').value.trim();
+  if(!custName){ toast('Customer zaroori hai!','w'); return; }
+  if(!pid){ toast('Cylinder type select karo!','w'); return; }
+  if(qty<1){ toast('Qty 1 se kam nahi!','w'); return; }
+  const total=qty*charge;
+  let custId=document.getElementById('rf-cust-id').value||findOrCreateCust(custName,custPhone);
+  const custs=DB.custs(); const c=custs[custId];
+  const invNo=DB.nextId('INV'); const txnId=DB.nextId('TXN');
+  const dt=new Date().toISOString();
+  const txn={id:txnId,invNo,custId,custName:c.name,custPhone:c.phone,
+    type:'REFILL',prodId:pid,prodName:prods[pid]?.name||pid,qty,unitPrice:charge,amount:total,pay,note,dt,addedBy:getSession()?.id||'U1'};
+  DB.addTxn(txn);
+  if(pay==='credit'){ c.creditSales+=total; c.balance+=total; }
+  else c.cashSales+=total;
+  c.salesCount++; c.lastVisit=dt;
+  DB.setCusts(custs);
+  if(total>0) DB.addLedgerEntry({id:DB.nextId('LED'),custId,dt,desc:`Refill ${prods[pid]?.name} x${qty}`,debit:pay==='credit'?total:0,cashAmt:pay!=='credit'?total:0,pay,txnRef:txnId,balance:c.balance});
+  showRefillReceipt(txn,c);
+  toast('Refill record ho gayi! 🔥','s');
+  document.getElementById('rf-cust').value=''; document.getElementById('rf-phone').value='';
+  document.getElementById('rf-cust-id').value=''; document.getElementById('rf-prod').value='';
+  document.getElementById('rf-qty').value=1; document.getElementById('rf-charge').value='';
+  document.getElementById('rf-note').value=''; document.getElementById('rf-total').textContent='Rs 0';
+}
+function showRefillReceipt(txn,c){
+  document.getElementById('refill-receipt-content').innerHTML=`
+    <div class="rh">
+      <div><div class="shop">🔥 LPG Point<small>Gas Cylinder Shop</small></div></div>
+      <div class="inv-meta"><div class="inv-no">${txn.invNo}</div><div class="inv-type">Refill Receipt</div><div>${fmtDt(txn.dt)}</div></div>
+    </div>
+    <div class="rb">
+      <div class="r2col">
+        <div><div class="r-lbl">Customer</div><div class="r-val">${c.name}</div><div class="r-val-sm">${c.phone}</div></div>
+        <div><div class="r-lbl">Payment</div><div class="r-val">${payLabel(txn.pay)}</div><div class="r-val-sm">${fmtDate(txn.dt)}</div></div>
+      </div>
+      <table class="rtbl"><thead><tr><th>Item</th><th>Qty</th><th>Unit Charge</th><th>Total</th></tr></thead>
+      <tbody><tr><td>${txn.prodName}</td><td class="tc fw7">${txn.qty}</td><td>Rs ${txn.unitPrice.toLocaleString()}</td><td class="fw7">Rs ${txn.amount.toLocaleString()}</td></tr></tbody></table>
+      <div class="r-total-row"><div class="r-total-box"><div class="tl">REFILL CHARGE</div><div class="tv">Rs ${txn.amount.toLocaleString()}</div></div></div>
+    </div>
+    <div class="rf"><span>Shukriya! Gas mubarak ho ⛽</span><span>LPG Point</span></div>`;
+  openModal('refillReceiptModal');
+}
+setupCustAC('rf-cust','rf-cust-drop','rf-phone','rf-cust-id');
+</script>
+</body>
+</html>
