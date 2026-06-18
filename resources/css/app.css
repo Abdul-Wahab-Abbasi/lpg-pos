@@ -88,6 +88,52 @@
     --bs-toast-bg: var(--lpg-card);
     --bs-toast-header-bg: var(--lpg-card);
 }
+.form-control:focus,
+.form-select:focus {
+    border-color: var(--lpg-accent);
+    box-shadow: 0 0 0 .25rem rgba(249, 115, 22, .15);
+}
+
+/* ==========================================================================
+   Login page
+   Standalone centered card, no sidebar — ported from ui/Login.html.
+   ========================================================================== */
+.login-page {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.login-card {
+    width: 100%;
+    max-width: 380px;
+    background: var(--lpg-card);
+    border: 1px solid var(--lpg-border);
+    border-radius: 16px;
+    padding: 36px 32px;
+}
+.login-logo-icon {
+    width: 56px;
+    height: 56px;
+    border-radius: 14px;
+    background: linear-gradient(135deg, var(--lpg-accent), #c2410c);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 28px;
+    margin-bottom: 12px;
+}
+.password-toggle-btn {
+    position: absolute;
+    right: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: none;
+    border: none;
+    color: var(--lpg-muted);
+    cursor: pointer;
+    font-size: 15px;
+}
 
 /* ==========================================================================
    App shell — sidebar, topbar, main content

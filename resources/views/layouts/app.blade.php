@@ -57,9 +57,9 @@
                 <div class="sidebar-avatar">{{ strtoupper(substr(auth()->user()?->name ?? 'O', 0, 1)) }}</div>
                 <div>
                     <div class="sidebar-username">{{ auth()->user()?->name ?? 'Owner' }}</div>
-                    <div class="sidebar-userrole">Admin</div>
+                    <div class="sidebar-userrole">Owner</div>
                 </div>
-                <form method="POST" action="/logout" class="ms-auto">
+                <form method="POST" action="{{ route('logout') }}" class="ms-auto">
                     @csrf
                     <button type="submit" class="sidebar-logout" title="Logout">
                         <i class="bi bi-box-arrow-right"></i>
