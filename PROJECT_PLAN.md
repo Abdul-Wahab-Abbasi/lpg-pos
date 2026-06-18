@@ -10,7 +10,7 @@ Check these off as each sprint is completed. Always check this section first to 
 
 - [x] **Sprint 0** — Docs & Planning (`CLAUDE.md`, `PROJECT_PLAN.md`)
 - [x] **Sprint 1** — Project Setup & Environment
-- [ ] **Sprint 2** — Layout & Design System
+- [x] **Sprint 2** — Layout & Design System
 - [ ] **Sprint 3** — Authentication
 - [ ] **Sprint 4** — Products & Inventory
 - [ ] **Sprint 5** — Customers

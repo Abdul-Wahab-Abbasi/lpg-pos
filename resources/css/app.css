@@ -10,6 +10,280 @@
 @import 'bootstrap/dist/css/bootstrap.min.css';
 @import 'bootstrap-icons/font/bootstrap-icons.css';
 
-body {
-    font-family: 'Inter', sans-serif;
+/* ==========================================================================
+   Brand tokens + Bootstrap variable overrides
+   Ported from ui/assets/css/style.css. Bootstrap 5.3 bakes most per-component
+   colors (.btn-primary, .modal, .toast, .card, etc.) into their own
+   component-scoped --bs-* vars rather than reading --bs-primary etc. directly,
+   so root overrides alone aren't enough for those — they're overridden below
+   each component individually. Utilities that DO read the root vars live
+   (.text-bg-*, .text-success, focus rings built from -rgb companions, body
+   color/bg) pick up the root block automatically.
+   ========================================================================== */
+:root {
+    --lpg-bg: #0d1117;
+    --lpg-card: #161b22;
+    --lpg-panel: #1c2230;
+    --lpg-border: #2a3340;
+    --lpg-accent: #f97316;
+    --lpg-accent-hover: #ea6c0c;
+    --lpg-blue: #3b82f6;
+    --lpg-green: #22c55e;
+    --lpg-danger: #ef4444;
+    --lpg-warn: #eab308;
+    --lpg-muted: #8b949e;
+    --lpg-text: #e6edf3;
+    --lpg-white: #ffffff;
+    --lpg-sidebar-width: 230px;
+
+    --bs-body-bg: var(--lpg-bg);
+    --bs-body-bg-rgb: 13, 17, 23;
+    --bs-body-color: var(--lpg-text);
+    --bs-body-color-rgb: 230, 237, 243;
+    --bs-body-font-family: 'Inter', sans-serif;
+    --bs-font-monospace: 'JetBrains Mono', monospace;
+    --bs-emphasis-color: var(--lpg-white);
+    --bs-heading-color: var(--lpg-white);
+    --bs-secondary-color: var(--lpg-muted);
+    --bs-secondary-bg: var(--lpg-panel);
+    --bs-tertiary-bg: var(--lpg-panel);
+    --bs-border-color: var(--lpg-border);
+    --bs-border-color-translucent: var(--lpg-border);
+    --bs-link-color: var(--lpg-accent);
+    --bs-link-color-rgb: 249, 115, 22;
+    --bs-link-hover-color: var(--lpg-accent-hover);
+
+    --bs-primary: var(--lpg-accent);
+    --bs-primary-rgb: 249, 115, 22;
+    --bs-success: var(--lpg-green);
+    --bs-success-rgb: 34, 197, 94;
+    --bs-danger: var(--lpg-danger);
+    --bs-danger-rgb: 239, 68, 68;
+    --bs-warning: var(--lpg-warn);
+    --bs-warning-rgb: 234, 179, 8;
+    --bs-info: var(--lpg-blue);
+    --bs-info-rgb: 59, 130, 246;
+}
+
+/* Bootstrap hardcodes these per-component at build time, so root overrides
+   above don't reach them — themed individually instead. */
+.btn-primary {
+    --bs-btn-bg: var(--lpg-accent);
+    --bs-btn-border-color: var(--lpg-accent);
+    --bs-btn-hover-bg: var(--lpg-accent-hover);
+    --bs-btn-hover-border-color: var(--lpg-accent-hover);
+    --bs-btn-active-bg: var(--lpg-accent-hover);
+    --bs-btn-active-border-color: var(--lpg-accent-hover);
+    --bs-btn-disabled-bg: var(--lpg-accent);
+    --bs-btn-disabled-border-color: var(--lpg-accent);
+    --bs-btn-focus-shadow-rgb: 249, 115, 22;
+}
+.card {
+    --bs-card-bg: var(--lpg-card);
+}
+.modal {
+    --bs-modal-bg: var(--lpg-card);
+}
+.toast {
+    --bs-toast-bg: var(--lpg-card);
+    --bs-toast-header-bg: var(--lpg-card);
+}
+
+/* ==========================================================================
+   App shell — sidebar, topbar, main content
+   No Bootstrap equivalent for this fixed-sidebar layout, so it's custom.
+   ========================================================================== */
+.sidebar {
+    width: var(--lpg-sidebar-width);
+    min-height: 100vh;
+    background: var(--lpg-card);
+    border-right: 1px solid var(--lpg-border);
+    position: fixed;
+    top: 0;
+    left: 0;
+    z-index: 300;
+    display: flex;
+    flex-direction: column;
+    overflow-y: auto;
+}
+.sidebar-logo {
+    padding: 20px 16px 16px;
+    border-bottom: 1px solid var(--lpg-border);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-shrink: 0;
+}
+.sidebar-logo-icon {
+    width: 38px;
+    height: 38px;
+    border-radius: 9px;
+    background: linear-gradient(135deg, var(--lpg-accent), #c2410c);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 19px;
+    flex-shrink: 0;
+}
+.sidebar-logo-text .name {
+    font-weight: 800;
+    font-size: 14px;
+    color: var(--lpg-white);
+}
+.sidebar-logo-text .subtitle {
+    font-size: 10px;
+    color: var(--lpg-muted);
+    margin-top: 1px;
+}
+.sidebar-section {
+    padding: 12px 14px 3px;
+    font-size: 9.5px;
+    font-weight: 700;
+    color: var(--lpg-muted);
+    letter-spacing: 1.3px;
+    text-transform: uppercase;
+}
+.sidebar-link {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    padding: 9px 14px;
+    margin: 2px 8px;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--lpg-muted);
+    text-decoration: none;
+    transition: all .15s;
+}
+.sidebar-link:hover {
+    background: var(--lpg-panel);
+    color: var(--lpg-text);
+}
+.sidebar-link.active {
+    background: rgba(249, 115, 22, .14);
+    color: var(--lpg-accent);
+    border-left: 3px solid var(--lpg-accent);
+    margin-left: 5px;
+    padding-left: 11px;
+}
+.sidebar-link i {
+    font-size: 15px;
+    width: 18px;
+    flex-shrink: 0;
+}
+.sidebar-footer {
+    margin-top: auto;
+    padding: 14px 16px;
+    border-top: 1px solid var(--lpg-border);
+    flex-shrink: 0;
+}
+.sidebar-avatar {
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    background: var(--lpg-accent);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 13px;
+    font-weight: 700;
+    color: #fff;
+    flex-shrink: 0;
+}
+.sidebar-username {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--lpg-text);
+}
+.sidebar-userrole {
+    font-size: 10px;
+    color: var(--lpg-muted);
+}
+.sidebar-logout {
+    background: none;
+    border: none;
+    color: var(--lpg-muted);
+    cursor: pointer;
+    font-size: 15px;
+    transition: color .15s;
+}
+.sidebar-logout:hover {
+    color: var(--lpg-danger);
+}
+
+.main-content {
+    margin-left: var(--lpg-sidebar-width);
+    padding: 26px 28px;
+    min-height: 100vh;
+}
+.topbar-subtitle {
+    font-size: 11px;
+    color: var(--lpg-muted);
+    margin-top: 2px;
+}
+
+@media (max-width: 768px) {
+    .sidebar {
+        display: none;
+    }
+    .main-content {
+        margin-left: 0;
+        padding: 14px;
+    }
+}
+
+/* ==========================================================================
+   Stat card
+   Bespoke decorative-circle stat tile, no Bootstrap equivalent.
+   ========================================================================== */
+.stat-card {
+    background: var(--lpg-card);
+    border: 1px solid var(--lpg-border);
+    border-radius: 12px;
+    padding: 18px;
+    position: relative;
+    overflow: hidden;
+}
+.stat-card::after {
+    content: '';
+    position: absolute;
+    bottom: -22px;
+    right: -22px;
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    opacity: .07;
+    background: currentColor;
+}
+.stat-card-accent { color: var(--lpg-accent); }
+.stat-card-blue { color: var(--lpg-blue); }
+.stat-card-green { color: var(--lpg-green); }
+.stat-card-danger { color: var(--lpg-danger); }
+.stat-card-white { color: var(--lpg-white); }
+.stat-card-label {
+    font-size: 10.5px;
+    font-weight: 600;
+    color: var(--lpg-muted);
+    margin-bottom: 7px;
+    letter-spacing: .2px;
+}
+.stat-card-value {
+    font-size: 25px;
+    font-weight: 800;
+    font-family: 'JetBrains Mono', monospace;
+    color: currentColor;
+}
+.stat-card-sub {
+    font-size: 10.5px;
+    color: var(--lpg-muted);
+    margin-top: 5px;
+}
+.stat-card-icon {
+    position: absolute;
+    top: 14px;
+    right: 14px;
+    font-size: 22px;
+    opacity: .2;
+    color: currentColor;
 }
