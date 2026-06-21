@@ -2,7 +2,9 @@
 
 @section('title', 'Inventory — LPG Point')
 @section('page-title', 'Inventory')
-@section('page-subtitle', 'Stock → Cylinder Stock')
+@section('page-subtitle')
+    Stock → <span>Cylinder Stock</span>
+@endsection
 
 @section('topbar-actions')
     @if ($lowStockCount > 0)

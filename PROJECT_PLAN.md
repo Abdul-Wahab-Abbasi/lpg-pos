@@ -13,7 +13,7 @@ Check these off as each sprint is completed. Always check this section first to 
 - [x] **Sprint 2** — Layout & Design System
 - [x] **Sprint 3** — Authentication
 - [x] **Sprint 4** — Products & Inventory
-- [ ] **Sprint 5** — Customers
+- [x] **Sprint 5** — Customers
 - [ ] **Sprint 6** — Sales / Returns / Refills engine
 - [ ] **Sprint 7** — Transactions list & Customer Ledger
 - [ ] **Sprint 8** — Dashboard & Reports

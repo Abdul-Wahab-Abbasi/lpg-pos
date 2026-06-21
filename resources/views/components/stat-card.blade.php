@@ -6,7 +6,7 @@
     'variant' => 'accent',
 ])
 
-<div {{ $attributes->merge(['class' => "stat-card stat-card-{$variant}"]) }}>
+<div {{ $attributes->merge(['class' => "stat-card stat-card-{$variant} h-100"]) }}>
     <div class="stat-card-label">{{ $label }}</div>
     <div class="stat-card-value">{{ $value }}</div>
     @if ($sub)

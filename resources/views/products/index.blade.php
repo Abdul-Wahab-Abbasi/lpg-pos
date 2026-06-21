@@ -2,7 +2,9 @@
 
 @section('title', 'Products — LPG Point')
 @section('page-title', 'Products')
-@section('page-subtitle', 'Stock → Cylinder Types')
+@section('page-subtitle')
+    Stock → <span>Cylinder Types</span>
+@endsection
 
 @section('topbar-actions')
     <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addProductModal">

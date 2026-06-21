@@ -315,7 +315,22 @@ table.tbl {
 .toast {
     --bs-toast-bg: var(--lpg-card);
     --bs-toast-header-bg: var(--lpg-card);
+    --bs-toast-color: var(--lpg-text);
+    --bs-toast-border-radius: .5625rem;
+    --bs-toast-padding-x: 1rem;
+    --bs-toast-padding-y: .6875rem;
+    font-size: 13px;
+    font-weight: 500;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, .4);
 }
+.toast-success { border: 1px solid rgba(34, 197, 94, .45); }
+.toast-warning { border: 1px solid rgba(234, 179, 8, .45); }
+.toast-danger { border: 1px solid rgba(239, 68, 68, .45); }
+.toast-info { border: 1px solid rgba(59, 130, 246, .45); }
+.toast-success .bi { color: var(--lpg-green); }
+.toast-warning .bi { color: var(--lpg-warn); }
+.toast-danger .bi { color: var(--lpg-danger); }
+.toast-info .bi { color: var(--lpg-blue); }
 
 /* ==========================================================================
    Login page
@@ -491,6 +506,9 @@ table.tbl {
     color: var(--lpg-muted);
     margin-top: 2px;
 }
+.topbar-subtitle span {
+    color: var(--lpg-accent);
+}
 
 @media (max-width: 768px) {
     .sidebar {
@@ -607,4 +625,22 @@ table.tbl {
     font-family: 'JetBrains Mono', monospace;
     font-weight: 600;
     color: var(--lpg-text);
+}
+
+/* ==========================================================================
+   Customers
+   Ported from ui/Customers.html's customer-row avatar circle.
+   ========================================================================== */
+.customer-avatar {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: var(--lpg-accent);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: .8125rem;
+    font-weight: 700;
+    color: #fff;
+    flex-shrink: 0;
 }
